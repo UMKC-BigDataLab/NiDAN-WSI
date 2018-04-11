@@ -1,0 +1,275 @@
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+17/04/27 04:30:06 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/04/27 04:30:21 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/04/27 04:30:21 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/04/27 04:30:21 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+17/04/27 04:30:23 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/04/27 04:30:34 WARN metastore.ObjectStore: Failed to get database global_temp, returning NoSuchObjectException
+Spark context Web UI available at http://128.110.152.45:4040
+Spark context available as 'sc' (master = spark://ctl:7077, app id = app-20170427043023-0145).
+Spark session available as 'spark'.
+Welcome to
+      ____              __
+     / __/__  ___ _____/ /__
+    _\ \/ _ \/ _ `/ __/  '_/
+   /___/ .__/\_,_/_/ /_/\_\   version 2.1.0
+      /_/
+         
+Using Scala version 2.11.8 (OpenJDK 64-Bit Server VM, Java 1.8.0_121)
+Type in expressions to have them evaluated.
+Type :help for more information.
+
+scala> //spark-shell --master spark://ctl:7077 --driver-memory 28G  --executor-memory 28G  --executor-core s 8  --num-executors 16  --conf spark.io.compression.codec=lzf  --conf spark.akka.frameSize=1024  --conf s park.driver.maxResultSize=2g
+
+scala> 
+
+scala> 
+
+scala> import java.io.File
+import java.io.File
+
+scala> import java.io.FileOutputStream
+import java.io.FileOutputStream
+
+scala> 
+
+scala> val queryMsg = "#QUERY "
+queryMsg: String = "#QUERY "
+
+scala> val loadDBMsg = "#LOAD_DB "
+loadDBMsg: String = "#LOAD_DB "
+
+scala> val loadTable = "#LOAD_TABLE "
+loadTable: String = "#LOAD_TABLE "
+
+scala> val loadSqlContext = "#LOAD_SQL_CONTEXT "
+loadSqlContext: String = "#LOAD_SQL_CONTEXT "
+
+scala> val dataSource = "/nidan/parquet/slide55.prqt"
+dataSource: String = /nidan/parquet/slide55.prqt
+
+scala> 
+
+scala> def show_timing[T](proc: => T): T = {
+     |     val start=System.nanoTime()
+     |     val res = proc
+     |     val end = System.nanoTime()
+     |     println("Time elapsed: " + (end-start)/1000000000.0 + " seconds")
+     |     res
+     | }
+show_timing: [T](proc: => T)T
+
+scala> 
+
+scala> val writeToLocal = (in:(Array[Byte], Long, String)) =>{
+     |     val bytes = in._1
+     |     val output = in._3
+     |     
+     |     val writer = new FileOutputStream(output)
+     |     writer.write(bytes)
+     |     writer.close
+     |   }
+writeToLocal: ((Array[Byte], Long, String)) => Unit = <function1>
+
+scala> 
+
+scala> val queries = List(
+     | ("SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=1 and imageLevel = 0  and imageId = '1.svs'",1),
+     | ("SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=2 and imageLevel = 0  and imageId = '1.svs'",2),
+     | ("SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=4 and imageLevel = 0  and imageId = '1.svs'",4),
+     | ("SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=8 and imageLevel = 0  and imageId = '1.svs'",8)
+     | )
+queries: List[(String, Int)] = List((SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=1 and imageLevel = 0 and imageId = '1.svs',1), (SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=2 and imageLevel = 0 and imageId = '1.svs',2), (SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=4 and imageLevel = 0 and imageId = '1.svs',4), (SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=8 and imageLevel = 0 and imageId = '1.svs',8))
+
+scala> 
+
+scala> 
+
+scala> val sqlContext = show_timing{new org.apache.spark.sql.SQLContext(sc)}
+warning: there was one deprecation warning; re-run with -deprecation for details
+Time elapsed: 0.001150731 seconds
+sqlContext: org.apache.spark.sql.SQLContext = org.apache.spark.sql.SQLContext@664217a8
+
+scala> val pf = show_timing{sqlContext.read.parquet(dataSource)}
+org.apache.spark.sql.AnalysisException: Unable to infer schema for Parquet. It must be specified manually.;
+  at org.apache.spark.sql.execution.datasources.DataSource$$anonfun$8.apply(DataSource.scala:189)
+  at org.apache.spark.sql.execution.datasources.DataSource$$anonfun$8.apply(DataSource.scala:189)
+  at scala.Option.getOrElse(Option.scala:121)
+  at org.apache.spark.sql.execution.datasources.DataSource.org$apache$spark$sql$execution$datasources$DataSource$$getOrInferFileFormatSchema(DataSource.scala:188)
+  at org.apache.spark.sql.execution.datasources.DataSource.resolveRelation(DataSource.scala:387)
+  at org.apache.spark.sql.DataFrameReader.load(DataFrameReader.scala:152)
+  at org.apache.spark.sql.DataFrameReader.parquet(DataFrameReader.scala:441)
+  at org.apache.spark.sql.DataFrameReader.parquet(DataFrameReader.scala:425)
+  at $anonfun$1.apply(<console>:32)
+  at $anonfun$1.apply(<console>:32)
+  at show_timing(<console>:27)
+  ... 48 elided
+
+scala> show_timing{pf.createOrReplaceTempView("data")}
+<console>:28: error: not found: value pf
+       show_timing{pf.createOrReplaceTempView("data")}
+                   ^
+
+scala> 
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (b ytes, index) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+org.apache.spark.sql.AnalysisException: Table or view not found: data; line 1 pos 23
+  at org.apache.spark.sql.catalyst.analysis.package$AnalysisErrorAt.failAnalysis(package.scala:42)
+  at org.apache.spark.sql.catalyst.analysis.Analyzer$ResolveRelations$.org$apache$spark$sql$catalyst$analysis$Analyzer$ResolveRelations$$lookupTableFromCatalog(Analyzer.scala:459)
+  at org.apache.spark.sql.catalyst.analysis.Analyzer$ResolveRelations$$anonfun$apply$8.applyOrElse(Analyzer.scala:478)
+  at org.apache.spark.sql.catalyst.analysis.Analyzer$ResolveRelations$$anonfun$apply$8.applyOrElse(Analyzer.scala:463)
+  at org.apache.spark.sql.catalyst.plans.logical.LogicalPlan$$anonfun$resolveOperators$1.apply(LogicalPlan.scala:61)
+  at org.apache.spark.sql.catalyst.plans.logical.LogicalPlan$$anonfun$resolveOperators$1.apply(LogicalPlan.scala:61)
+  at org.apache.spark.sql.catalyst.trees.CurrentOrigin$.withOrigin(TreeNode.scala:70)
+  at org.apache.spark.sql.catalyst.plans.logical.LogicalPlan.resolveOperators(LogicalPlan.scala:60)
+  at org.apache.spark.sql.catalyst.plans.logical.LogicalPlan$$anonfun$1.apply(LogicalPlan.scala:58)
+  at org.apache.spark.sql.catalyst.plans.logical.LogicalPlan$$anonfun$1.apply(LogicalPlan.scala:58)
+  at org.apache.spark.sql.catalyst.trees.TreeNode$$anonfun$5.apply(TreeNode.scala:331)
+  at org.apache.spark.sql.catalyst.trees.TreeNode.mapProductIterator(TreeNode.scala:188)
+  at org.apache.spark.sql.catalyst.trees.TreeNode.transformChildren(TreeNode.scala:329)
+  at org.apache.spark.sql.catalyst.plans.logical.LogicalPlan.resolveOperators(LogicalPlan.scala:58)
+  at org.apache.spark.sql.catalyst.plans.logical.LogicalPlan$$anonfun$1.apply(LogicalPlan.scala:58)
+  at org.apache.spark.sql.catalyst.plans.logical.LogicalPlan$$anonfun$1.apply(LogicalPlan.scala:58)
+  at org.apache.spark.sql.catalyst.trees.TreeNode$$anonfun$5.apply(TreeNode.scala:331)
+  at org.apache.spark.sql.catalyst.trees.TreeNode.mapProductIterator(TreeNode.scala:188)
+  at org.apache.spark.sql.catalyst.trees.TreeNode.transformChildren(TreeNode.scala:329)
+  at org.apache.spark.sql.catalyst.plans.logical.LogicalPlan.resolveOperators(LogicalPlan.scala:58)
+  at org.apache.spark.sql.catalyst.analysis.Analyzer$ResolveRelations$.apply(Analyzer.scala:463)
+  at org.apache.spark.sql.catalyst.analysis.Analyzer$ResolveRelations$.apply(Analyzer.scala:453)
+  at org.apache.spark.sql.catalyst.rules.RuleExecutor$$anonfun$execute$1$$anonfun$apply$1.apply(RuleExecutor.scala:85)
+  at org.apache.spark.sql.catalyst.rules.RuleExecutor$$anonfun$execute$1$$anonfun$apply$1.apply(RuleExecutor.scala:82)
+  at scala.collection.LinearSeqOptimized$class.foldLeft(LinearSeqOptimized.scala:124)
+  at scala.collection.immutable.List.foldLeft(List.scala:84)
+  at org.apache.spark.sql.catalyst.rules.RuleExecutor$$anonfun$execute$1.apply(RuleExecutor.scala:82)
+  at org.apache.spark.sql.catalyst.rules.RuleExecutor$$anonfun$execute$1.apply(RuleExecutor.scala:74)
+  at scala.collection.immutable.List.foreach(List.scala:381)
+  at org.apache.spark.sql.catalyst.rules.RuleExecutor.execute(RuleExecutor.scala:74)
+  at org.apache.spark.sql.execution.QueryExecution.analyzed$lzycompute(QueryExecution.scala:64)
+  at org.apache.spark.sql.execution.QueryExecution.analyzed(QueryExecution.scala:62)
+  at org.apache.spark.sql.execution.QueryExecution.assertAnalyzed(QueryExecution.scala:50)
+  at org.apache.spark.sql.Dataset$.ofRows(Dataset.scala:63)
+  at org.apache.spark.sql.SparkSession.sql(SparkSession.scala:592)
+  at org.apache.spark.sql.SQLContext.sql(SQLContext.scala:699)
+  at $anonfun$1.apply$mcI$sp(<console>:35)
+  at $anonfun$1.apply(<console>:35)
+  at $anonfun$1.apply(<console>:35)
+  at show_timing(<console>:27)
+  ... 48 elided
+
+scala> 
+
+scala> for (query <- queries){
+     | println(s">> Running query: ${query._1}")
+     | show_timing{sqlContext.sql(query._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes,  index) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+     | }
+>> Running query: SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=1 and imageLevel = 0 and imageId = '1.svs'
+org.apache.spark.sql.AnalysisException: Table or view not found: data; line 1 pos 23
+  at org.apache.spark.sql.catalyst.analysis.package$AnalysisErrorAt.failAnalysis(package.scala:42)
+  at org.apache.spark.sql.catalyst.analysis.Analyzer$ResolveRelations$.org$apache$spark$sql$catalyst$analysis$Analyzer$ResolveRelations$$lookupTableFromCatalog(Analyzer.scala:459)
+  at org.apache.spark.sql.catalyst.analysis.Analyzer$ResolveRelations$$anonfun$apply$8.applyOrElse(Analyzer.scala:478)
+  at org.apache.spark.sql.catalyst.analysis.Analyzer$ResolveRelations$$anonfun$apply$8.applyOrElse(Analyzer.scala:463)
+  at org.apache.spark.sql.catalyst.plans.logical.LogicalPlan$$anonfun$resolveOperators$1.apply(LogicalPlan.scala:61)
+  at org.apache.spark.sql.catalyst.plans.logical.LogicalPlan$$anonfun$resolveOperators$1.apply(LogicalPlan.scala:61)
+  at org.apache.spark.sql.catalyst.trees.CurrentOrigin$.withOrigin(TreeNode.scala:70)
+  at org.apache.spark.sql.catalyst.plans.logical.LogicalPlan.resolveOperators(LogicalPlan.scala:60)
+  at org.apache.spark.sql.catalyst.plans.logical.LogicalPlan$$anonfun$1.apply(LogicalPlan.scala:58)
+  at org.apache.spark.sql.catalyst.plans.logical.LogicalPlan$$anonfun$1.apply(LogicalPlan.scala:58)
+  at org.apache.spark.sql.catalyst.trees.TreeNode$$anonfun$5.apply(TreeNode.scala:331)
+  at org.apache.spark.sql.catalyst.trees.TreeNode.mapProductIterator(TreeNode.scala:188)
+  at org.apache.spark.sql.catalyst.trees.TreeNode.transformChildren(TreeNode.scala:329)
+  at org.apache.spark.sql.catalyst.plans.logical.LogicalPlan.resolveOperators(LogicalPlan.scala:58)
+  at org.apache.spark.sql.catalyst.plans.logical.LogicalPlan$$anonfun$1.apply(LogicalPlan.scala:58)
+  at org.apache.spark.sql.catalyst.plans.logical.LogicalPlan$$anonfun$1.apply(LogicalPlan.scala:58)
+  at org.apache.spark.sql.catalyst.trees.TreeNode$$anonfun$5.apply(TreeNode.scala:331)
+  at org.apache.spark.sql.catalyst.trees.TreeNode.mapProductIterator(TreeNode.scala:188)
+  at org.apache.spark.sql.catalyst.trees.TreeNode.transformChildren(TreeNode.scala:329)
+  at org.apache.spark.sql.catalyst.plans.logical.LogicalPlan.resolveOperators(LogicalPlan.scala:58)
+  at org.apache.spark.sql.catalyst.analysis.Analyzer$ResolveRelations$.apply(Analyzer.scala:463)
+  at org.apache.spark.sql.catalyst.analysis.Analyzer$ResolveRelations$.apply(Analyzer.scala:453)
+  at org.apache.spark.sql.catalyst.rules.RuleExecutor$$anonfun$execute$1$$anonfun$apply$1.apply(RuleExecutor.scala:85)
+  at org.apache.spark.sql.catalyst.rules.RuleExecutor$$anonfun$execute$1$$anonfun$apply$1.apply(RuleExecutor.scala:82)
+  at scala.collection.LinearSeqOptimized$class.foldLeft(LinearSeqOptimized.scala:124)
+  at scala.collection.immutable.List.foldLeft(List.scala:84)
+  at org.apache.spark.sql.catalyst.rules.RuleExecutor$$anonfun$execute$1.apply(RuleExecutor.scala:82)
+  at org.apache.spark.sql.catalyst.rules.RuleExecutor$$anonfun$execute$1.apply(RuleExecutor.scala:74)
+  at scala.collection.immutable.List.foreach(List.scala:381)
+  at org.apache.spark.sql.catalyst.rules.RuleExecutor.execute(RuleExecutor.scala:74)
+  at org.apache.spark.sql.execution.QueryExecution.analyzed$lzycompute(QueryExecution.scala:64)
+  at org.apache.spark.sql.execution.QueryExecution.analyzed(QueryExecution.scala:62)
+  at org.apache.spark.sql.execution.QueryExecution.assertAnalyzed(QueryExecution.scala:50)
+  at org.apache.spark.sql.Dataset$.ofRows(Dataset.scala:63)
+  at org.apache.spark.sql.SparkSession.sql(SparkSession.scala:592)
+  at org.apache.spark.sql.SQLContext.sql(SQLContext.scala:699)
+  at $anonfun$1$$anonfun$apply$1.apply$mcI$sp(<console>:37)
+  at $anonfun$1$$anonfun$apply$1.apply(<console>:37)
+  at $anonfun$1$$anonfun$apply$1.apply(<console>:37)
+  at show_timing(<console>:27)
+  at $anonfun$1.apply(<console>:37)
+  at $anonfun$1.apply(<console>:35)
+  at scala.collection.immutable.List.foreach(List.scala:381)
+  ... 51 elided
+
+scala> 
+
+scala> 
+
+scala> :quit
+17/04/27 04:30:57 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+11.2 G   /nidan/parquet/slide1.prqt
+12.8 G   /nidan/parquet/slide10.prqt
+18.9 G   /nidan/parquet/slide11.prqt
+9.3 G    /nidan/parquet/slide12.prqt
+11.6 G   /nidan/parquet/slide13.prqt
+13.0 G   /nidan/parquet/slide14.prqt
+11.2 G   /nidan/parquet/slide15.prqt
+14.9 G   /nidan/parquet/slide16.prqt
+12.8 G   /nidan/parquet/slide17.prqt
+18.9 G   /nidan/parquet/slide18.prqt
+9.3 G    /nidan/parquet/slide19.prqt
+14.9 G   /nidan/parquet/slide2.prqt
+11.6 G   /nidan/parquet/slide20.prqt
+13.0 G   /nidan/parquet/slide21.prqt
+11.2 G   /nidan/parquet/slide22.prqt
+14.9 G   /nidan/parquet/slide23.prqt
+12.8 G   /nidan/parquet/slide24.prqt
+18.9 G   /nidan/parquet/slide25.prqt
+9.3 G    /nidan/parquet/slide26.prqt
+11.6 G   /nidan/parquet/slide27.prqt
+13.0 G   /nidan/parquet/slide28.prqt
+11.2 G   /nidan/parquet/slide29.prqt
+12.8 G   /nidan/parquet/slide3.prqt
+14.9 G   /nidan/parquet/slide30.prqt
+12.8 G   /nidan/parquet/slide31.prqt
+18.9 G   /nidan/parquet/slide32.prqt
+9.3 G    /nidan/parquet/slide33.prqt
+11.6 G   /nidan/parquet/slide34.prqt
+13.0 G   /nidan/parquet/slide35.prqt
+11.2 G   /nidan/parquet/slide36.prqt
+14.9 G   /nidan/parquet/slide37.prqt
+12.8 G   /nidan/parquet/slide38.prqt
+18.9 G   /nidan/parquet/slide39.prqt
+18.9 G   /nidan/parquet/slide4.prqt
+9.3 G    /nidan/parquet/slide40.prqt
+11.6 G   /nidan/parquet/slide41.prqt
+13.0 G   /nidan/parquet/slide42.prqt
+11.2 G   /nidan/parquet/slide43.prqt
+14.9 G   /nidan/parquet/slide44.prqt
+10.3 G   /nidan/parquet/slide45.prqt
+570.9 M  /nidan/parquet/slide46.prqt
+1.7 G    /nidan/parquet/slide47.prqt
+0        /nidan/parquet/slide48.prqt
+569.5 M  /nidan/parquet/slide49.prqt
+9.3 G    /nidan/parquet/slide5.prqt
+0        /nidan/parquet/slide50.prqt
+0        /nidan/parquet/slide51.prqt
+0        /nidan/parquet/slide52.prqt
+0        /nidan/parquet/slide53.prqt
+0        /nidan/parquet/slide54.prqt
+0        /nidan/parquet/slide55.prqt
+11.6 G   /nidan/parquet/slide6.prqt
+13.0 G   /nidan/parquet/slide7.prqt
+11.2 G   /nidan/parquet/slide8.prqt
+14.9 G   /nidan/parquet/slide9.prqt

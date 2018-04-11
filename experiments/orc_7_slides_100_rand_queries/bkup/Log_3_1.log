@@ -1,0 +1,558 @@
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+17/05/01 01:09:26 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/05/01 01:09:40 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/05/01 01:09:40 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/05/01 01:09:41 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+17/05/01 01:09:43 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/05/01 01:09:55 WARN metastore.ObjectStore: Version information not found in metastore. hive.metastore.schema.verification is not enabled so recording the schema version 1.2.0
+17/05/01 01:09:56 WARN metastore.ObjectStore: Failed to get database default, returning NoSuchObjectException
+17/05/01 01:09:58 WARN metastore.ObjectStore: Failed to get database global_temp, returning NoSuchObjectException
+Spark context Web UI available at http://128.110.152.45:4040
+Spark context available as 'sc' (master = spark://ctl:7077, app id = app-20170501010942-0250).
+Spark session available as 'spark'.
+Welcome to
+      ____              __
+     / __/__  ___ _____/ /__
+    _\ \/ _ \/ _ `/ __/  '_/
+   /___/ .__/\_,_/_/ /_/\_\   version 2.1.0
+      /_/
+         
+Using Scala version 2.11.8 (OpenJDK 64-Bit Server VM, Java 1.8.0_121)
+Type in expressions to have them evaluated.
+Type :help for more information.
+
+scala> //spark-shell --master spark://ctl:7077 --driver-memory 28G  --executor-memory 28G  --executor-cores  8  --num-executors 16  --conf spark.io.compression.codec=lzf  --conf spark.akka.frameSize=1024  --conf spark .driver.maxResultSize=2g
+
+scala> 
+
+scala> 
+
+scala> import java.io.File
+import java.io.File
+
+scala> import java.io.FileOutputStream
+import java.io.FileOutputStream
+
+scala> import org.apache.spark.sql._
+import org.apache.spark.sql._
+
+scala> 
+
+scala> val queryMsg = "#QUERY "
+queryMsg: String = "#QUERY "
+
+scala> val loadDBMsg = "#LOAD_DB "
+loadDBMsg: String = "#LOAD_DB "
+
+scala> val loadTable = "#LOAD_TABLE "
+loadTable: String = "#LOAD_TABLE "
+
+scala> val loadSqlContext = "#LOAD_SQL_CONTEXT "
+loadSqlContext: String = "#LOAD_SQL_CONTEXT "
+
+scala> val dataSource = "/nidan/orc/allSlides/imageId=1.svs"
+dataSource: String = /nidan/orc/allSlides/imageId=1.svs
+
+scala> // val dataSource = "/nidan/orc/allSlides/imageId=1.svs/imageLevel=0"
+
+scala> 
+
+scala> def show_timing[T](proc: => T): T = {
+     |     val start=System.nanoTime()
+     |     val res = proc
+     |     val end = System.nanoTime()
+     |     println("Time elapsed: " + (end-start)/1000000000.0 + " seconds")
+     |     res
+     | }
+show_timing: [T](proc: => T)T
+
+scala> 
+
+scala> val writeToLocal = (in:(Array[Byte], Long, String)) =>{
+     |     val bytes = in._1
+     |     val output = in._3
+     |     
+     |     val writer = new FileOutputStream(output)
+     |     writer.write(bytes)
+     |     writer.close
+     |     1
+     |   }
+writeToLocal: ((Array[Byte], Long, String)) => Int = <function1>
+
+scala> 
+
+scala> val queries = List(
+     | ("SELECT imageBytes, partitionZIndex from data where imageLevel=0 and partitionZIndex>=1 and partitio nZIndex<=1",1),
+     | ("SELECT imageBytes, partitionZIndex from data where imageLevel=0 and partitionZIndex>=1 and partitio nZIndex<=2",2),
+     | ("SELECT imageBytes, partitionZIndex from data where imageLevel=0 and partitionZIndex>=1 and partitio nZIndex<=4",4),
+     | ("SELECT imageBytes, partitionZIndex from data where imageLevel=0 and partitionZIndex>=1 and partitio nZIndex<=8",8)
+     | )
+queries: List[(String, Int)] = List((SELECT imageBytes, partitionZIndex from data where imageLevel=0 and partitionZIndex>=1 and partitionZIndex<=1,1), (SELECT imageBytes, partitionZIndex from data where imageLevel=0 and partitionZIndex>=1 and partitionZIndex<=2,2), (SELECT imageBytes, partitionZIndex from data where imageLevel=0 and partitionZIndex>=1 and partitionZIndex<=4,4), (SELECT imageBytes, partitionZIndex from data where imageLevel=0 and partitionZIndex>=1 and partitionZIndex<=8,8))
+
+scala> 
+
+scala> 
+
+scala> val sqlHive = show_timing{new org.apache.spark.sql.hive.HiveContext(sc)}
+warning: there was one deprecation warning; re-run with -deprecation for details
+Time elapsed: 0.001558005 seconds
+sqlHive: org.apache.spark.sql.hive.HiveContext = org.apache.spark.sql.hive.HiveContext@310db5c4
+
+scala> 
+
+scala>   val pf = show_timing{sqlHive.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 3.466690044 seconds
+pf: Unit = ()
+
+scala> 
+
+scala> 
+
+scala> show_timing{
+     | val binaryTiles = sqlHive.sql(queries(0)._1).map(it => (it.getAs[Array[Byte]](0), it.getAs[Long](1))) 
+     | val indexTiles = binaryTiles.rdd.map{case (bytes, index) => (bytes, index, s"o6_${index}.JPEG")}
+     | val dataSize = indexTiles.collect.map(writeToLocal).size
+     | }
+[Stage 0:>                                                      (0 + 112) / 112][Stage 0:============================================>          (90 + 22) / 112][Stage 0:======================================================>(111 + 1) / 112]17/05/01 01:10:35 WARN scheduler.TaskSetManager: Lost task 0.0 in stage 0.0 (TID 0, 128.110.152.41, executor 7): java.lang.NullPointerException
+	at org.apache.hadoop.hive.ql.io.orc.InStream$CompressedStream.readHeader(InStream.java:185)
+	at org.apache.hadoop.hive.ql.io.orc.InStream$CompressedStream.read(InStream.java:227)
+	at org.apache.hadoop.hive.ql.io.orc.RunLengthIntegerReaderV2.readValues(RunLengthIntegerReaderV2.java:54)
+	at org.apache.hadoop.hive.ql.io.orc.RunLengthIntegerReaderV2.next(RunLengthIntegerReaderV2.java:302)
+	at org.apache.hadoop.hive.ql.io.orc.TreeReaderFactory$BinaryTreeReader.next(TreeReaderFactory.java:882)
+	at org.apache.hadoop.hive.ql.io.orc.TreeReaderFactory$StructTreeReader.next(TreeReaderFactory.java:2004)
+	at org.apache.hadoop.hive.ql.io.orc.RecordReaderImpl.next(RecordReaderImpl.java:1039)
+	at org.apache.hadoop.hive.ql.io.orc.SparkOrcNewRecordReader.nextKeyValue(SparkOrcNewRecordReader.java:83)
+	at org.apache.spark.sql.execution.datasources.RecordReaderIterator.hasNext(RecordReaderIterator.scala:39)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at org.apache.spark.sql.execution.datasources.FileScanRDD$$anon$1.hasNext(FileScanRDD.scala:102)
+	at org.apache.spark.sql.execution.datasources.FileScanRDD$$anon$1.nextIterator(FileScanRDD.scala:166)
+	at org.apache.spark.sql.execution.datasources.FileScanRDD$$anon$1.hasNext(FileScanRDD.scala:102)
+	at org.apache.spark.sql.catalyst.expressions.GeneratedClass$GeneratedIterator.processNext(Unknown Source)
+	at org.apache.spark.sql.execution.BufferedRowIterator.hasNext(BufferedRowIterator.java:43)
+	at org.apache.spark.sql.execution.WholeStageCodegenExec$$anonfun$8$$anon$1.hasNext(WholeStageCodegenExec.scala:377)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$class.foreach(Iterator.scala:893)
+	at scala.collection.AbstractIterator.foreach(Iterator.scala:1336)
+	at scala.collection.generic.Growable$class.$plus$plus$eq(Growable.scala:59)
+	at scala.collection.mutable.ArrayBuffer.$plus$plus$eq(ArrayBuffer.scala:104)
+	at scala.collection.mutable.ArrayBuffer.$plus$plus$eq(ArrayBuffer.scala:48)
+	at scala.collection.TraversableOnce$class.to(TraversableOnce.scala:310)
+	at scala.collection.AbstractIterator.to(Iterator.scala:1336)
+	at scala.collection.TraversableOnce$class.toBuffer(TraversableOnce.scala:302)
+	at scala.collection.AbstractIterator.toBuffer(Iterator.scala:1336)
+	at scala.collection.TraversableOnce$class.toArray(TraversableOnce.scala:289)
+	at scala.collection.AbstractIterator.toArray(Iterator.scala:1336)
+	at org.apache.spark.rdd.RDD$$anonfun$collect$1$$anonfun$13.apply(RDD.scala:935)
+	at org.apache.spark.rdd.RDD$$anonfun$collect$1$$anonfun$13.apply(RDD.scala:935)
+	at org.apache.spark.SparkContext$$anonfun$runJob$5.apply(SparkContext.scala:1944)
+	at org.apache.spark.SparkContext$$anonfun$runJob$5.apply(SparkContext.scala:1944)
+	at org.apache.spark.scheduler.ResultTask.runTask(ResultTask.scala:87)
+	at org.apache.spark.scheduler.Task.run(Task.scala:99)
+	at org.apache.spark.executor.Executor$TaskRunner.run(Executor.scala:282)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+	at java.lang.Thread.run(Thread.java:745)
+
+17/05/01 01:10:52 WARN scheduler.TaskSetManager: Lost task 0.2 in stage 0.0 (TID 113, 128.110.152.36, executor 9): java.lang.NullPointerException
+	at org.apache.hadoop.hive.ql.io.orc.InStream$CompressedStream.readHeader(InStream.java:185)
+	at org.apache.hadoop.hive.ql.io.orc.InStream$CompressedStream.read(InStream.java:227)
+	at org.apache.hadoop.hive.ql.io.orc.RunLengthIntegerReaderV2.readValues(RunLengthIntegerReaderV2.java:54)
+	at org.apache.hadoop.hive.ql.io.orc.RunLengthIntegerReaderV2.next(RunLengthIntegerReaderV2.java:302)
+	at org.apache.hadoop.hive.ql.io.orc.TreeReaderFactory$BinaryTreeReader.next(TreeReaderFactory.java:882)
+	at org.apache.hadoop.hive.ql.io.orc.TreeReaderFactory$StructTreeReader.next(TreeReaderFactory.java:2004)
+	at org.apache.hadoop.hive.ql.io.orc.RecordReaderImpl.next(RecordReaderImpl.java:1039)
+	at org.apache.hadoop.hive.ql.io.orc.SparkOrcNewRecordReader.nextKeyValue(SparkOrcNewRecordReader.java:83)
+	at org.apache.spark.sql.execution.datasources.RecordReaderIterator.hasNext(RecordReaderIterator.scala:39)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at org.apache.spark.sql.execution.datasources.FileScanRDD$$anon$1.hasNext(FileScanRDD.scala:102)
+	at org.apache.spark.sql.execution.datasources.FileScanRDD$$anon$1.nextIterator(FileScanRDD.scala:166)
+	at org.apache.spark.sql.execution.datasources.FileScanRDD$$anon$1.hasNext(FileScanRDD.scala:102)
+	at org.apache.spark.sql.catalyst.expressions.GeneratedClass$GeneratedIterator.processNext(Unknown Source)
+	at org.apache.spark.sql.execution.BufferedRowIterator.hasNext(BufferedRowIterator.java:43)
+	at org.apache.spark.sql.execution.WholeStageCodegenExec$$anonfun$8$$anon$1.hasNext(WholeStageCodegenExec.scala:377)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$class.foreach(Iterator.scala:893)
+	at scala.collection.AbstractIterator.foreach(Iterator.scala:1336)
+	at scala.collection.generic.Growable$class.$plus$plus$eq(Growable.scala:59)
+	at scala.collection.mutable.ArrayBuffer.$plus$plus$eq(ArrayBuffer.scala:104)
+	at scala.collection.mutable.ArrayBuffer.$plus$plus$eq(ArrayBuffer.scala:48)
+	at scala.collection.TraversableOnce$class.to(TraversableOnce.scala:310)
+	at scala.collection.AbstractIterator.to(Iterator.scala:1336)
+	at scala.collection.TraversableOnce$class.toBuffer(TraversableOnce.scala:302)
+	at scala.collection.AbstractIterator.toBuffer(Iterator.scala:1336)
+	at scala.collection.TraversableOnce$class.toArray(TraversableOnce.scala:289)
+	at scala.collection.AbstractIterator.toArray(Iterator.scala:1336)
+	at org.apache.spark.rdd.RDD$$anonfun$collect$1$$anonfun$13.apply(RDD.scala:935)
+	at org.apache.spark.rdd.RDD$$anonfun$collect$1$$anonfun$13.apply(RDD.scala:935)
+	at org.apache.spark.SparkContext$$anonfun$runJob$5.apply(SparkContext.scala:1944)
+	at org.apache.spark.SparkContext$$anonfun$runJob$5.apply(SparkContext.scala:1944)
+	at org.apache.spark.scheduler.ResultTask.runTask(ResultTask.scala:87)
+	at org.apache.spark.scheduler.Task.run(Task.scala:99)
+	at org.apache.spark.executor.Executor$TaskRunner.run(Executor.scala:282)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+	at java.lang.Thread.run(Thread.java:745)
+
+17/05/01 01:11:00 ERROR scheduler.TaskSetManager: Task 0 in stage 0.0 failed 4 times; aborting job
+org.apache.spark.SparkException: Job aborted due to stage failure: Task 0 in stage 0.0 failed 4 times, most recent failure: Lost task 0.3 in stage 0.0 (TID 114, 128.110.152.41, executor 7): java.lang.NullPointerException
+	at org.apache.hadoop.hive.ql.io.orc.InStream$CompressedStream.readHeader(InStream.java:185)
+	at org.apache.hadoop.hive.ql.io.orc.InStream$CompressedStream.read(InStream.java:227)
+	at org.apache.hadoop.hive.ql.io.orc.RunLengthIntegerReaderV2.readValues(RunLengthIntegerReaderV2.java:54)
+	at org.apache.hadoop.hive.ql.io.orc.RunLengthIntegerReaderV2.next(RunLengthIntegerReaderV2.java:302)
+	at org.apache.hadoop.hive.ql.io.orc.TreeReaderFactory$BinaryTreeReader.next(TreeReaderFactory.java:882)
+	at org.apache.hadoop.hive.ql.io.orc.TreeReaderFactory$StructTreeReader.next(TreeReaderFactory.java:2004)
+	at org.apache.hadoop.hive.ql.io.orc.RecordReaderImpl.next(RecordReaderImpl.java:1039)
+	at org.apache.hadoop.hive.ql.io.orc.SparkOrcNewRecordReader.nextKeyValue(SparkOrcNewRecordReader.java:83)
+	at org.apache.spark.sql.execution.datasources.RecordReaderIterator.hasNext(RecordReaderIterator.scala:39)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at org.apache.spark.sql.execution.datasources.FileScanRDD$$anon$1.hasNext(FileScanRDD.scala:102)
+	at org.apache.spark.sql.execution.datasources.FileScanRDD$$anon$1.nextIterator(FileScanRDD.scala:166)
+	at org.apache.spark.sql.execution.datasources.FileScanRDD$$anon$1.hasNext(FileScanRDD.scala:102)
+	at org.apache.spark.sql.catalyst.expressions.GeneratedClass$GeneratedIterator.processNext(Unknown Source)
+	at org.apache.spark.sql.execution.BufferedRowIterator.hasNext(BufferedRowIterator.java:43)
+	at org.apache.spark.sql.execution.WholeStageCodegenExec$$anonfun$8$$anon$1.hasNext(WholeStageCodegenExec.scala:377)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$class.foreach(Iterator.scala:893)
+	at scala.collection.AbstractIterator.foreach(Iterator.scala:1336)
+	at scala.collection.generic.Growable$class.$plus$plus$eq(Growable.scala:59)
+	at scala.collection.mutable.ArrayBuffer.$plus$plus$eq(ArrayBuffer.scala:104)
+	at scala.collection.mutable.ArrayBuffer.$plus$plus$eq(ArrayBuffer.scala:48)
+	at scala.collection.TraversableOnce$class.to(TraversableOnce.scala:310)
+	at scala.collection.AbstractIterator.to(Iterator.scala:1336)
+	at scala.collection.TraversableOnce$class.toBuffer(TraversableOnce.scala:302)
+	at scala.collection.AbstractIterator.toBuffer(Iterator.scala:1336)
+	at scala.collection.TraversableOnce$class.toArray(TraversableOnce.scala:289)
+	at scala.collection.AbstractIterator.toArray(Iterator.scala:1336)
+	at org.apache.spark.rdd.RDD$$anonfun$collect$1$$anonfun$13.apply(RDD.scala:935)
+	at org.apache.spark.rdd.RDD$$anonfun$collect$1$$anonfun$13.apply(RDD.scala:935)
+	at org.apache.spark.SparkContext$$anonfun$runJob$5.apply(SparkContext.scala:1944)
+	at org.apache.spark.SparkContext$$anonfun$runJob$5.apply(SparkContext.scala:1944)
+	at org.apache.spark.scheduler.ResultTask.runTask(ResultTask.scala:87)
+	at org.apache.spark.scheduler.Task.run(Task.scala:99)
+	at org.apache.spark.executor.Executor$TaskRunner.run(Executor.scala:282)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+	at java.lang.Thread.run(Thread.java:745)
+
+Driver stacktrace:
+  at org.apache.spark.scheduler.DAGScheduler.org$apache$spark$scheduler$DAGScheduler$$failJobAndIndependentStages(DAGScheduler.scala:1435)
+  at org.apache.spark.scheduler.DAGScheduler$$anonfun$abortStage$1.apply(DAGScheduler.scala:1423)
+  at org.apache.spark.scheduler.DAGScheduler$$anonfun$abortStage$1.apply(DAGScheduler.scala:1422)
+  at scala.collection.mutable.ResizableArray$class.foreach(ResizableArray.scala:59)
+  at scala.collection.mutable.ArrayBuffer.foreach(ArrayBuffer.scala:48)
+  at org.apache.spark.scheduler.DAGScheduler.abortStage(DAGScheduler.scala:1422)
+  at org.apache.spark.scheduler.DAGScheduler$$anonfun$handleTaskSetFailed$1.apply(DAGScheduler.scala:802)
+  at org.apache.spark.scheduler.DAGScheduler$$anonfun$handleTaskSetFailed$1.apply(DAGScheduler.scala:802)
+  at scala.Option.foreach(Option.scala:257)
+  at org.apache.spark.scheduler.DAGScheduler.handleTaskSetFailed(DAGScheduler.scala:802)
+  at org.apache.spark.scheduler.DAGSchedulerEventProcessLoop.doOnReceive(DAGScheduler.scala:1650)
+  at org.apache.spark.scheduler.DAGSchedulerEventProcessLoop.onReceive(DAGScheduler.scala:1605)
+  at org.apache.spark.scheduler.DAGSchedulerEventProcessLoop.onReceive(DAGScheduler.scala:1594)
+  at org.apache.spark.util.EventLoop$$anon$1.run(EventLoop.scala:48)
+  at org.apache.spark.scheduler.DAGScheduler.runJob(DAGScheduler.scala:628)
+  at org.apache.spark.SparkContext.runJob(SparkContext.scala:1918)
+  at org.apache.spark.SparkContext.runJob(SparkContext.scala:1931)
+  at org.apache.spark.SparkContext.runJob(SparkContext.scala:1944)
+  at org.apache.spark.SparkContext.runJob(SparkContext.scala:1958)
+  at org.apache.spark.rdd.RDD$$anonfun$collect$1.apply(RDD.scala:935)
+  at org.apache.spark.rdd.RDDOperationScope$.withScope(RDDOperationScope.scala:151)
+  at org.apache.spark.rdd.RDDOperationScope$.withScope(RDDOperationScope.scala:112)
+  at org.apache.spark.rdd.RDD.withScope(RDD.scala:362)
+  at org.apache.spark.rdd.RDD.collect(RDD.scala:934)
+  at $anonfun$1.apply$mcV$sp(<console>:41)
+  at $anonfun$1.apply(<console>:38)
+  at $anonfun$1.apply(<console>:38)
+  at show_timing(<console>:30)
+  ... 54 elided
+Caused by: java.lang.NullPointerException
+  at org.apache.hadoop.hive.ql.io.orc.InStream$CompressedStream.readHeader(InStream.java:185)
+  at org.apache.hadoop.hive.ql.io.orc.InStream$CompressedStream.read(InStream.java:227)
+  at org.apache.hadoop.hive.ql.io.orc.RunLengthIntegerReaderV2.readValues(RunLengthIntegerReaderV2.java:54)
+  at org.apache.hadoop.hive.ql.io.orc.RunLengthIntegerReaderV2.next(RunLengthIntegerReaderV2.java:302)
+  at org.apache.hadoop.hive.ql.io.orc.TreeReaderFactory$BinaryTreeReader.next(TreeReaderFactory.java:882)
+  at org.apache.hadoop.hive.ql.io.orc.TreeReaderFactory$StructTreeReader.next(TreeReaderFactory.java:2004)
+  at org.apache.hadoop.hive.ql.io.orc.RecordReaderImpl.next(RecordReaderImpl.java:1039)
+  at org.apache.hadoop.hive.ql.io.orc.SparkOrcNewRecordReader.nextKeyValue(SparkOrcNewRecordReader.java:83)
+  at org.apache.spark.sql.execution.datasources.RecordReaderIterator.hasNext(RecordReaderIterator.scala:39)
+  at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+  at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+  at org.apache.spark.sql.execution.datasources.FileScanRDD$$anon$1.hasNext(FileScanRDD.scala:102)
+  at org.apache.spark.sql.execution.datasources.FileScanRDD$$anon$1.nextIterator(FileScanRDD.scala:166)
+  at org.apache.spark.sql.execution.datasources.FileScanRDD$$anon$1.hasNext(FileScanRDD.scala:102)
+  at org.apache.spark.sql.catalyst.expressions.GeneratedClass$GeneratedIterator.processNext(Unknown Source)
+  at org.apache.spark.sql.execution.BufferedRowIterator.hasNext(BufferedRowIterator.java:43)
+  at org.apache.spark.sql.execution.WholeStageCodegenExec$$anonfun$8$$anon$1.hasNext(WholeStageCodegenExec.scala:377)
+  at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+  at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+  at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+  at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+  at scala.collection.Iterator$class.foreach(Iterator.scala:893)
+  at scala.collection.AbstractIterator.foreach(Iterator.scala:1336)
+  at scala.collection.generic.Growable$class.$plus$plus$eq(Growable.scala:59)
+  at scala.collection.mutable.ArrayBuffer.$plus$plus$eq(ArrayBuffer.scala:104)
+  at scala.collection.mutable.ArrayBuffer.$plus$plus$eq(ArrayBuffer.scala:48)
+  at scala.collection.TraversableOnce$class.to(TraversableOnce.scala:310)
+  at scala.collection.AbstractIterator.to(Iterator.scala:1336)
+  at scala.collection.TraversableOnce$class.toBuffer(TraversableOnce.scala:302)
+  at scala.collection.AbstractIterator.toBuffer(Iterator.scala:1336)
+  at scala.collection.TraversableOnce$class.toArray(TraversableOnce.scala:289)
+  at scala.collection.AbstractIterator.toArray(Iterator.scala:1336)
+  at org.apache.spark.rdd.RDD$$anonfun$collect$1$$anonfun$13.apply(RDD.scala:935)
+  at org.apache.spark.rdd.RDD$$anonfun$collect$1$$anonfun$13.apply(RDD.scala:935)
+  at org.apache.spark.SparkContext$$anonfun$runJob$5.apply(SparkContext.scala:1944)
+  at org.apache.spark.SparkContext$$anonfun$runJob$5.apply(SparkContext.scala:1944)
+  at org.apache.spark.scheduler.ResultTask.runTask(ResultTask.scala:87)
+  at org.apache.spark.scheduler.Task.run(Task.scala:99)
+  at org.apache.spark.executor.Executor$TaskRunner.run(Executor.scala:282)
+  at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+  at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+  at java.lang.Thread.run(Thread.java:745)
+
+scala> 
+
+scala> for (query <- queries){
+     | println(s">> Running query: ${query._1}")
+     |  show_timing{
+     |   val binaryTiles1 = sqlHive.sql(query._1).map(it => (it.getAs[Array[Byte]](0), it.getAs[Long](0)))
+     |   val indexTiles1 = binaryTiles1.rdd.map{case (bytes, index) => (bytes, index, s"o6_${index}.JPEG")}
+     |   val dataSize1 = indexTiles1.collect.map(writeToLocal).size
+     | }
+     | }
+>> Running query: SELECT imageBytes, partitionZIndex from data where imageLevel=0 and partitionZIndex>=1 and partitionZIndex<=1
+[Stage 1:======================================================>(111 + 1) / 112]17/05/01 01:11:13 WARN scheduler.TaskSetManager: Lost task 0.0 in stage 1.0 (TID 115, 128.110.152.18, executor 6): java.lang.NullPointerException
+	at org.apache.hadoop.hive.ql.io.orc.InStream$CompressedStream.readHeader(InStream.java:185)
+	at org.apache.hadoop.hive.ql.io.orc.InStream$CompressedStream.read(InStream.java:227)
+	at org.apache.hadoop.hive.ql.io.orc.RunLengthIntegerReaderV2.readValues(RunLengthIntegerReaderV2.java:54)
+	at org.apache.hadoop.hive.ql.io.orc.RunLengthIntegerReaderV2.next(RunLengthIntegerReaderV2.java:302)
+	at org.apache.hadoop.hive.ql.io.orc.TreeReaderFactory$BinaryTreeReader.next(TreeReaderFactory.java:882)
+	at org.apache.hadoop.hive.ql.io.orc.TreeReaderFactory$StructTreeReader.next(TreeReaderFactory.java:2004)
+	at org.apache.hadoop.hive.ql.io.orc.RecordReaderImpl.next(RecordReaderImpl.java:1039)
+	at org.apache.hadoop.hive.ql.io.orc.SparkOrcNewRecordReader.nextKeyValue(SparkOrcNewRecordReader.java:83)
+	at org.apache.spark.sql.execution.datasources.RecordReaderIterator.hasNext(RecordReaderIterator.scala:39)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at org.apache.spark.sql.execution.datasources.FileScanRDD$$anon$1.hasNext(FileScanRDD.scala:102)
+	at org.apache.spark.sql.execution.datasources.FileScanRDD$$anon$1.nextIterator(FileScanRDD.scala:166)
+	at org.apache.spark.sql.execution.datasources.FileScanRDD$$anon$1.hasNext(FileScanRDD.scala:102)
+	at org.apache.spark.sql.catalyst.expressions.GeneratedClass$GeneratedIterator.processNext(Unknown Source)
+	at org.apache.spark.sql.execution.BufferedRowIterator.hasNext(BufferedRowIterator.java:43)
+	at org.apache.spark.sql.execution.WholeStageCodegenExec$$anonfun$8$$anon$1.hasNext(WholeStageCodegenExec.scala:377)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$class.foreach(Iterator.scala:893)
+	at scala.collection.AbstractIterator.foreach(Iterator.scala:1336)
+	at scala.collection.generic.Growable$class.$plus$plus$eq(Growable.scala:59)
+	at scala.collection.mutable.ArrayBuffer.$plus$plus$eq(ArrayBuffer.scala:104)
+	at scala.collection.mutable.ArrayBuffer.$plus$plus$eq(ArrayBuffer.scala:48)
+	at scala.collection.TraversableOnce$class.to(TraversableOnce.scala:310)
+	at scala.collection.AbstractIterator.to(Iterator.scala:1336)
+	at scala.collection.TraversableOnce$class.toBuffer(TraversableOnce.scala:302)
+	at scala.collection.AbstractIterator.toBuffer(Iterator.scala:1336)
+	at scala.collection.TraversableOnce$class.toArray(TraversableOnce.scala:289)
+	at scala.collection.AbstractIterator.toArray(Iterator.scala:1336)
+	at org.apache.spark.rdd.RDD$$anonfun$collect$1$$anonfun$13.apply(RDD.scala:935)
+	at org.apache.spark.rdd.RDD$$anonfun$collect$1$$anonfun$13.apply(RDD.scala:935)
+	at org.apache.spark.SparkContext$$anonfun$runJob$5.apply(SparkContext.scala:1944)
+	at org.apache.spark.SparkContext$$anonfun$runJob$5.apply(SparkContext.scala:1944)
+	at org.apache.spark.scheduler.ResultTask.runTask(ResultTask.scala:87)
+	at org.apache.spark.scheduler.Task.run(Task.scala:99)
+	at org.apache.spark.executor.Executor$TaskRunner.run(Executor.scala:282)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+	at java.lang.Thread.run(Thread.java:745)
+
+17/05/01 01:11:29 WARN scheduler.TaskSetManager: Lost task 0.2 in stage 1.0 (TID 228, 128.110.152.12, executor 13): java.lang.NullPointerException
+	at org.apache.hadoop.hive.ql.io.orc.InStream$CompressedStream.readHeader(InStream.java:185)
+	at org.apache.hadoop.hive.ql.io.orc.InStream$CompressedStream.read(InStream.java:227)
+	at org.apache.hadoop.hive.ql.io.orc.RunLengthIntegerReaderV2.readValues(RunLengthIntegerReaderV2.java:54)
+	at org.apache.hadoop.hive.ql.io.orc.RunLengthIntegerReaderV2.next(RunLengthIntegerReaderV2.java:302)
+	at org.apache.hadoop.hive.ql.io.orc.TreeReaderFactory$BinaryTreeReader.next(TreeReaderFactory.java:882)
+	at org.apache.hadoop.hive.ql.io.orc.TreeReaderFactory$StructTreeReader.next(TreeReaderFactory.java:2004)
+	at org.apache.hadoop.hive.ql.io.orc.RecordReaderImpl.next(RecordReaderImpl.java:1039)
+	at org.apache.hadoop.hive.ql.io.orc.SparkOrcNewRecordReader.nextKeyValue(SparkOrcNewRecordReader.java:83)
+	at org.apache.spark.sql.execution.datasources.RecordReaderIterator.hasNext(RecordReaderIterator.scala:39)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at org.apache.spark.sql.execution.datasources.FileScanRDD$$anon$1.hasNext(FileScanRDD.scala:102)
+	at org.apache.spark.sql.execution.datasources.FileScanRDD$$anon$1.nextIterator(FileScanRDD.scala:166)
+	at org.apache.spark.sql.execution.datasources.FileScanRDD$$anon$1.hasNext(FileScanRDD.scala:102)
+	at org.apache.spark.sql.catalyst.expressions.GeneratedClass$GeneratedIterator.processNext(Unknown Source)
+	at org.apache.spark.sql.execution.BufferedRowIterator.hasNext(BufferedRowIterator.java:43)
+	at org.apache.spark.sql.execution.WholeStageCodegenExec$$anonfun$8$$anon$1.hasNext(WholeStageCodegenExec.scala:377)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$class.foreach(Iterator.scala:893)
+	at scala.collection.AbstractIterator.foreach(Iterator.scala:1336)
+	at scala.collection.generic.Growable$class.$plus$plus$eq(Growable.scala:59)
+	at scala.collection.mutable.ArrayBuffer.$plus$plus$eq(ArrayBuffer.scala:104)
+	at scala.collection.mutable.ArrayBuffer.$plus$plus$eq(ArrayBuffer.scala:48)
+	at scala.collection.TraversableOnce$class.to(TraversableOnce.scala:310)
+	at scala.collection.AbstractIterator.to(Iterator.scala:1336)
+	at scala.collection.TraversableOnce$class.toBuffer(TraversableOnce.scala:302)
+	at scala.collection.AbstractIterator.toBuffer(Iterator.scala:1336)
+	at scala.collection.TraversableOnce$class.toArray(TraversableOnce.scala:289)
+	at scala.collection.AbstractIterator.toArray(Iterator.scala:1336)
+	at org.apache.spark.rdd.RDD$$anonfun$collect$1$$anonfun$13.apply(RDD.scala:935)
+	at org.apache.spark.rdd.RDD$$anonfun$collect$1$$anonfun$13.apply(RDD.scala:935)
+	at org.apache.spark.SparkContext$$anonfun$runJob$5.apply(SparkContext.scala:1944)
+	at org.apache.spark.SparkContext$$anonfun$runJob$5.apply(SparkContext.scala:1944)
+	at org.apache.spark.scheduler.ResultTask.runTask(ResultTask.scala:87)
+	at org.apache.spark.scheduler.Task.run(Task.scala:99)
+	at org.apache.spark.executor.Executor$TaskRunner.run(Executor.scala:282)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+	at java.lang.Thread.run(Thread.java:745)
+
+17/05/01 01:11:38 ERROR scheduler.TaskSetManager: Task 0 in stage 1.0 failed 4 times; aborting job
+org.apache.spark.SparkException: Job aborted due to stage failure: Task 0 in stage 1.0 failed 4 times, most recent failure: Lost task 0.3 in stage 1.0 (TID 229, 128.110.152.43, executor 10): java.lang.NullPointerException
+	at org.apache.hadoop.hive.ql.io.orc.InStream$CompressedStream.readHeader(InStream.java:185)
+	at org.apache.hadoop.hive.ql.io.orc.InStream$CompressedStream.read(InStream.java:227)
+	at org.apache.hadoop.hive.ql.io.orc.RunLengthIntegerReaderV2.readValues(RunLengthIntegerReaderV2.java:54)
+	at org.apache.hadoop.hive.ql.io.orc.RunLengthIntegerReaderV2.next(RunLengthIntegerReaderV2.java:302)
+	at org.apache.hadoop.hive.ql.io.orc.TreeReaderFactory$BinaryTreeReader.next(TreeReaderFactory.java:882)
+	at org.apache.hadoop.hive.ql.io.orc.TreeReaderFactory$StructTreeReader.next(TreeReaderFactory.java:2004)
+	at org.apache.hadoop.hive.ql.io.orc.RecordReaderImpl.next(RecordReaderImpl.java:1039)
+	at org.apache.hadoop.hive.ql.io.orc.SparkOrcNewRecordReader.nextKeyValue(SparkOrcNewRecordReader.java:83)
+	at org.apache.spark.sql.execution.datasources.RecordReaderIterator.hasNext(RecordReaderIterator.scala:39)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at org.apache.spark.sql.execution.datasources.FileScanRDD$$anon$1.hasNext(FileScanRDD.scala:102)
+	at org.apache.spark.sql.execution.datasources.FileScanRDD$$anon$1.nextIterator(FileScanRDD.scala:166)
+	at org.apache.spark.sql.execution.datasources.FileScanRDD$$anon$1.hasNext(FileScanRDD.scala:102)
+	at org.apache.spark.sql.catalyst.expressions.GeneratedClass$GeneratedIterator.processNext(Unknown Source)
+	at org.apache.spark.sql.execution.BufferedRowIterator.hasNext(BufferedRowIterator.java:43)
+	at org.apache.spark.sql.execution.WholeStageCodegenExec$$anonfun$8$$anon$1.hasNext(WholeStageCodegenExec.scala:377)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+	at scala.collection.Iterator$class.foreach(Iterator.scala:893)
+	at scala.collection.AbstractIterator.foreach(Iterator.scala:1336)
+	at scala.collection.generic.Growable$class.$plus$plus$eq(Growable.scala:59)
+	at scala.collection.mutable.ArrayBuffer.$plus$plus$eq(ArrayBuffer.scala:104)
+	at scala.collection.mutable.ArrayBuffer.$plus$plus$eq(ArrayBuffer.scala:48)
+	at scala.collection.TraversableOnce$class.to(TraversableOnce.scala:310)
+	at scala.collection.AbstractIterator.to(Iterator.scala:1336)
+	at scala.collection.TraversableOnce$class.toBuffer(TraversableOnce.scala:302)
+	at scala.collection.AbstractIterator.toBuffer(Iterator.scala:1336)
+	at scala.collection.TraversableOnce$class.toArray(TraversableOnce.scala:289)
+	at scala.collection.AbstractIterator.toArray(Iterator.scala:1336)
+	at org.apache.spark.rdd.RDD$$anonfun$collect$1$$anonfun$13.apply(RDD.scala:935)
+	at org.apache.spark.rdd.RDD$$anonfun$collect$1$$anonfun$13.apply(RDD.scala:935)
+	at org.apache.spark.SparkContext$$anonfun$runJob$5.apply(SparkContext.scala:1944)
+	at org.apache.spark.SparkContext$$anonfun$runJob$5.apply(SparkContext.scala:1944)
+	at org.apache.spark.scheduler.ResultTask.runTask(ResultTask.scala:87)
+	at org.apache.spark.scheduler.Task.run(Task.scala:99)
+	at org.apache.spark.executor.Executor$TaskRunner.run(Executor.scala:282)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+	at java.lang.Thread.run(Thread.java:745)
+
+Driver stacktrace:
+  at org.apache.spark.scheduler.DAGScheduler.org$apache$spark$scheduler$DAGScheduler$$failJobAndIndependentStages(DAGScheduler.scala:1435)
+  at org.apache.spark.scheduler.DAGScheduler$$anonfun$abortStage$1.apply(DAGScheduler.scala:1423)
+  at org.apache.spark.scheduler.DAGScheduler$$anonfun$abortStage$1.apply(DAGScheduler.scala:1422)
+  at scala.collection.mutable.ResizableArray$class.foreach(ResizableArray.scala:59)
+  at scala.collection.mutable.ArrayBuffer.foreach(ArrayBuffer.scala:48)
+  at org.apache.spark.scheduler.DAGScheduler.abortStage(DAGScheduler.scala:1422)
+  at org.apache.spark.scheduler.DAGScheduler$$anonfun$handleTaskSetFailed$1.apply(DAGScheduler.scala:802)
+  at org.apache.spark.scheduler.DAGScheduler$$anonfun$handleTaskSetFailed$1.apply(DAGScheduler.scala:802)
+  at scala.Option.foreach(Option.scala:257)
+  at org.apache.spark.scheduler.DAGScheduler.handleTaskSetFailed(DAGScheduler.scala:802)
+  at org.apache.spark.scheduler.DAGSchedulerEventProcessLoop.doOnReceive(DAGScheduler.scala:1650)
+  at org.apache.spark.scheduler.DAGSchedulerEventProcessLoop.onReceive(DAGScheduler.scala:1605)
+  at org.apache.spark.scheduler.DAGSchedulerEventProcessLoop.onReceive(DAGScheduler.scala:1594)
+  at org.apache.spark.util.EventLoop$$anon$1.run(EventLoop.scala:48)
+  at org.apache.spark.scheduler.DAGScheduler.runJob(DAGScheduler.scala:628)
+  at org.apache.spark.SparkContext.runJob(SparkContext.scala:1918)
+  at org.apache.spark.SparkContext.runJob(SparkContext.scala:1931)
+  at org.apache.spark.SparkContext.runJob(SparkContext.scala:1944)
+  at org.apache.spark.SparkContext.runJob(SparkContext.scala:1958)
+  at org.apache.spark.rdd.RDD$$anonfun$collect$1.apply(RDD.scala:935)
+  at org.apache.spark.rdd.RDDOperationScope$.withScope(RDDOperationScope.scala:151)
+  at org.apache.spark.rdd.RDDOperationScope$.withScope(RDDOperationScope.scala:112)
+  at org.apache.spark.rdd.RDD.withScope(RDD.scala:362)
+  at org.apache.spark.rdd.RDD.collect(RDD.scala:934)
+  at $anonfun$1$$anonfun$apply$1.apply$mcV$sp(<console>:43)
+  at $anonfun$1$$anonfun$apply$1.apply(<console>:40)
+  at $anonfun$1$$anonfun$apply$1.apply(<console>:40)
+  at show_timing(<console>:30)
+  at $anonfun$1.apply(<console>:40)
+  at $anonfun$1.apply(<console>:38)
+  at scala.collection.immutable.List.foreach(List.scala:381)
+  ... 57 elided
+Caused by: java.lang.NullPointerException
+  at org.apache.hadoop.hive.ql.io.orc.InStream$CompressedStream.readHeader(InStream.java:185)
+  at org.apache.hadoop.hive.ql.io.orc.InStream$CompressedStream.read(InStream.java:227)
+  at org.apache.hadoop.hive.ql.io.orc.RunLengthIntegerReaderV2.readValues(RunLengthIntegerReaderV2.java:54)
+  at org.apache.hadoop.hive.ql.io.orc.RunLengthIntegerReaderV2.next(RunLengthIntegerReaderV2.java:302)
+  at org.apache.hadoop.hive.ql.io.orc.TreeReaderFactory$BinaryTreeReader.next(TreeReaderFactory.java:882)
+  at org.apache.hadoop.hive.ql.io.orc.TreeReaderFactory$StructTreeReader.next(TreeReaderFactory.java:2004)
+  at org.apache.hadoop.hive.ql.io.orc.RecordReaderImpl.next(RecordReaderImpl.java:1039)
+  at org.apache.hadoop.hive.ql.io.orc.SparkOrcNewRecordReader.nextKeyValue(SparkOrcNewRecordReader.java:83)
+  at org.apache.spark.sql.execution.datasources.RecordReaderIterator.hasNext(RecordReaderIterator.scala:39)
+  at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+  at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+  at org.apache.spark.sql.execution.datasources.FileScanRDD$$anon$1.hasNext(FileScanRDD.scala:102)
+  at org.apache.spark.sql.execution.datasources.FileScanRDD$$anon$1.nextIterator(FileScanRDD.scala:166)
+  at org.apache.spark.sql.execution.datasources.FileScanRDD$$anon$1.hasNext(FileScanRDD.scala:102)
+  at org.apache.spark.sql.catalyst.expressions.GeneratedClass$GeneratedIterator.processNext(Unknown Source)
+  at org.apache.spark.sql.execution.BufferedRowIterator.hasNext(BufferedRowIterator.java:43)
+  at org.apache.spark.sql.execution.WholeStageCodegenExec$$anonfun$8$$anon$1.hasNext(WholeStageCodegenExec.scala:377)
+  at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+  at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+  at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+  at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408)
+  at scala.collection.Iterator$class.foreach(Iterator.scala:893)
+  at scala.collection.AbstractIterator.foreach(Iterator.scala:1336)
+  at scala.collection.generic.Growable$class.$plus$plus$eq(Growable.scala:59)
+  at scala.collection.mutable.ArrayBuffer.$plus$plus$eq(ArrayBuffer.scala:104)
+  at scala.collection.mutable.ArrayBuffer.$plus$plus$eq(ArrayBuffer.scala:48)
+  at scala.collection.TraversableOnce$class.to(TraversableOnce.scala:310)
+  at scala.collection.AbstractIterator.to(Iterator.scala:1336)
+  at scala.collection.TraversableOnce$class.toBuffer(TraversableOnce.scala:302)
+  at scala.collection.AbstractIterator.toBuffer(Iterator.scala:1336)
+  at scala.collection.TraversableOnce$class.toArray(TraversableOnce.scala:289)
+  at scala.collection.AbstractIterator.toArray(Iterator.scala:1336)
+  at org.apache.spark.rdd.RDD$$anonfun$collect$1$$anonfun$13.apply(RDD.scala:935)
+  at org.apache.spark.rdd.RDD$$anonfun$collect$1$$anonfun$13.apply(RDD.scala:935)
+  at org.apache.spark.SparkContext$$anonfun$runJob$5.apply(SparkContext.scala:1944)
+  at org.apache.spark.SparkContext$$anonfun$runJob$5.apply(SparkContext.scala:1944)
+  at org.apache.spark.scheduler.ResultTask.runTask(ResultTask.scala:87)
+  at org.apache.spark.scheduler.Task.run(Task.scala:99)
+  at org.apache.spark.executor.Executor$TaskRunner.run(Executor.scala:282)
+  at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+  at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+  at java.lang.Thread.run(Thread.java:745)
+
+scala> 
+
+scala> 
+
+scala> :quit
+17/05/01 01:11:39 ERROR scheduler.LiveListenerBus: SparkListenerBus has already stopped! Dropping event SparkListenerExecutorMetricsUpdate(13,WrappedArray())
+
+real	2m15.573s
+user	3m28.104s
+sys	0m3.168s
+17/05/01 01:11:41 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+6.0 G  /nidan/orc/allSlides/imageId=1.svs
+3.8 G  /nidan/orc/allSlides/imageId=2.svs
+6.5 G  /nidan/orc/allSlides/imageId=3.svs

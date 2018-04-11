@@ -1,0 +1,439 @@
+Warning: Ignoring non-spark config property: hive.exec.reducers.bytes.per.reducer=67108864
+Warning: Ignoring non-spark config property: hive.fetch.task.aggr=false
+Warning: Ignoring non-spark config property: hive.merge.sparkfiles=false
+Warning: Ignoring non-spark config property: hive.auto.convert.join.noconditionaltask=true
+Warning: Ignoring non-spark config property: hive.merge.size.per.task=256000000
+Warning: Ignoring non-spark config property: hive.smbjoin.cache.rows=10000
+Warning: Ignoring non-spark config property: hive.merge.smallfiles.avgsize=16000000
+Warning: Ignoring non-spark config property: hive.optimize.sort.dynamic.partition=false
+Warning: Ignoring non-spark config property: hive.exec.orc.default.stripe.size=67108864
+Warning: Ignoring non-spark config property: hive.vectorized.execution.enabled=true
+Warning: Ignoring non-spark config property: hive.optimize.reducededuplication.min.reducer=4
+Warning: Ignoring non-spark config property: hive.orc.splits.include.file.footer=false
+Warning: Ignoring non-spark config property: hive.merge.mapfiles=true
+Warning: Ignoring non-spark config property: mapreduce.input.fileinputformat.list-status.num-threads=5
+Warning: Ignoring non-spark config property: hive.vectorized.groupby.checkinterval=4096
+Warning: Ignoring non-spark config property: hive.compute.query.using.stats=true
+Warning: Ignoring non-spark config property: mapreduce.input.fileinputformat.split.maxsize=750000000
+Warning: Ignoring non-spark config property: hive.merge.orcfile.stripe.level=true
+Warning: Ignoring non-spark config property: hive.auto.convert.join.noconditionaltask.size=894435328
+Warning: Ignoring non-spark config property: hive.fetch.task.conversion.threshold=1073741824
+Warning: Ignoring non-spark config property: hive.auto.convert.join=true
+Warning: Ignoring non-spark config property: hive.optimize.reducededuplication=true
+Warning: Ignoring non-spark config property: hive.vectorized.groupby.flush.percent=0.1
+Warning: Ignoring non-spark config property: hive.fetch.task.conversion=more
+Warning: Ignoring non-spark config property: hive.limit.pushdown.memory.usage=0.4
+Warning: Ignoring non-spark config property: hive.vectorized.execution.reduce.enabled=false
+Warning: Ignoring non-spark config property: hive.map.aggr=true
+Warning: Ignoring non-spark config property: hive.stats.autogather=true
+Warning: Ignoring non-spark config property: hive.stats.fetch.column.stats=true
+Warning: Ignoring non-spark config property: hive.cbo.enable=true
+Warning: Ignoring non-spark config property: hive.map.aggr.hash.percentmemory=0.5
+Warning: Ignoring non-spark config property: hive.optimize.index.filter=true
+Warning: Ignoring non-spark config property: hive.optimize.bucketmapjoin.sortedmerge=false
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+17/05/25 14:15:19 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/05/25 14:15:33 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/05/25 14:15:33 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/05/25 14:15:34 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+17/05/25 14:15:36 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/05/25 14:15:49 WARN metastore.ObjectStore: Failed to get database global_temp, returning NoSuchObjectException
+Spark context Web UI available at http://128.110.152.45:4040
+Spark context available as 'sc' (master = spark://ctl:7077, app id = app-20170525141536-0667).
+Spark session available as 'spark'.
+Welcome to
+      ____              __
+     / __/__  ___ _____/ /__
+    _\ \/ _ \/ _ `/ __/  '_/
+   /___/ .__/\_,_/_/ /_/\_\   version 2.1.0
+      /_/
+         
+Using Scala version 2.11.8 (OpenJDK 64-Bit Server VM, Java 1.8.0_121)
+Type in expressions to have them evaluated.
+Type :help for more information.
+
+scala> import java.io.File
+import java.io.File
+
+scala> import java.io.FileOutputStream
+import java.io.FileOutputStream
+
+scala> import org.apache.spark.sql._
+import org.apache.spark.sql._
+
+scala> 
+
+scala> val queryMsg = "#QUERY "
+queryMsg: String = "#QUERY "
+
+scala> val loadDBMsg = "#LOAD_DB "
+loadDBMsg: String = "#LOAD_DB "
+
+scala> val loadTable = "#LOAD_TABLE "
+loadTable: String = "#LOAD_TABLE "
+
+scala> val loadsqlHive = "#LOAD_SQL_CONTEXT "
+loadsqlHive: String = "#LOAD_SQL_CONTEXT "
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> 
+
+scala> def show_timing[T](proc: => T): T = {
+     |     val start=System.nanoTime()
+     |     val res = proc
+     |     val end = System.nanoTime()
+     |     println("Time elapsed: " + (end-start)/1000000000.0 + " seconds")
+     |     res
+     | }
+show_timing: [T](proc: => T)T
+
+scala> 
+
+scala> val writeToLocal = (in:(Array[Byte], Long, String)) =>{
+     |     val bytes = in._1
+     |     val output = in._3
+     |     
+     |     val writer = new FileOutputStream(output)
+     |     writer.write(bytes)
+     |     writer.close
+     |     1
+     |   }
+writeToLocal: ((Array[Byte], Long, String)) => Int = <function1>
+
+scala>   
+     |   val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 21  OR  partitionIndex = 22  OR   partitionIndex = 34  OR  partitionIndex = 35  OR  partitionIndex = 36  OR  partitionIndex = 37  OR  partitionIndex  = 49  OR  partitionIndex = 50 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 60  OR  partitionIndex = 68  OR  partitionIndex = 69   OR  partitionIndex = 70  OR  partitionIndex = 71  OR  partitionIndex = 83  OR  partitionIndex = 84  OR  partitionIn dex = 85 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 42  OR  partitionIndex = 43  OR  partitionIndex = 44   OR  partitionIndex = 45  OR  partitionIndex = 57  OR  partitionIndex = 58  OR  partitionIndex = 59  OR  partitionIn dex = 60 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 120  OR  partitionIndex = 121  OR  partitionIndex = 12 2  OR  partitionIndex = 123  OR  partitionIndex = 135  OR  partitionIndex = 136  OR  partitionIndex = 137  OR  part itionIndex = 138 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 132  OR  partitionIndex = 133  OR  partitionIndex = 14 7  OR  partitionIndex = 148  OR  partitionIndex = 160  OR  partitionIndex = 161  OR  partitionIndex = 175  OR  part itionIndex = 176 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 141  OR  partitionIndex = 142  OR  partitionIndex = 15 4  OR  partitionIndex = 155  OR  partitionIndex = 156  OR  partitionIndex = 157  OR  partitionIndex = 169  OR  part itionIndex = 170 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 184  OR  partitionIndex = 185  OR  partitionIndex = 19 9  OR  partitionIndex = 200  OR  partitionIndex = 212  OR  partitionIndex = 213  OR  partitionIndex = 227  OR  part itionIndex = 228 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 72  OR  partitionIndex = 73  OR  partitionIndex = 74   OR  partitionIndex = 75  OR  partitionIndex = 87  OR  partitionIndex = 88  OR  partitionIndex = 89  OR  partitionIn dex = 116 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 130  OR  partitionIndex = 131  OR  partitionIndex = 14 5  OR  partitionIndex = 146  OR  partitionIndex = 158  OR  partitionIndex = 159  OR  partitionIndex = 173  OR  part itionIndex = 174 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 4  OR  partitionIndex = 5  OR  partitionIndex = 19  OR   partitionIndex = 32  OR  partitionIndex = 33  OR  partitionIndex = 46  OR  partitionIndex = 47  OR  partitionInde x = 48 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 205  OR  partitionIndex = 206  OR  partitionIndex = 21 8  OR  partitionIndex = 219  OR  partitionIndex = 220  OR  partitionIndex = 221  OR  partitionIndex = 233  OR  part itionIndex = 234 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 65  OR  partitionIndex = 66  OR  partitionIndex = 67   OR  partitionIndex = 79  OR  partitionIndex = 80  OR  partitionIndex = 81  OR  partitionIndex = 82  OR  partitionIn dex = 94 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 120  OR  partitionIndex = 120  OR  partitionIndex = 12 1  OR  partitionIndex = 122  OR  partitionIndex = 123  OR  partitionIndex = 135  OR  partitionIndex = 136  OR  part itionIndex = 137 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 12  OR  partitionIndex = 13  OR  partitionIndex = 14   OR  partitionIndex = 15  OR  partitionIndex = 27  OR  partitionIndex = 28  OR  partitionIndex = 29  OR  partitionIn dex = 30 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 85  OR  partitionIndex = 86  OR  partitionIndex = 98   OR  partitionIndex = 99  OR  partitionIndex = 100  OR  partitionIndex = 101  OR  partitionIndex = 113  OR  partitio nIndex = 114 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 132  OR  partitionIndex = 133  OR  partitionIndex = 13 4  OR  partitionIndex = 135  OR  partitionIndex = 147  OR  partitionIndex = 148  OR  partitionIndex = 149  OR  part itionIndex = 176 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 179  OR  partitionIndex = 180  OR  partitionIndex = 18 8  OR  partitionIndex = 189  OR  partitionIndex = 190  OR  partitionIndex = 191  OR  partitionIndex = 203  OR  part itionIndex = 204 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 74  OR  partitionIndex = 75  OR  partitionIndex = 89   OR  partitionIndex = 90  OR  partitionIndex = 102  OR  partitionIndex = 103  OR  partitionIndex = 117  OR  partitio nIndex = 118 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 62  OR  partitionIndex = 63  OR  partitionIndex = 76   OR  partitionIndex = 77  OR  partitionIndex = 78  OR  partitionIndex = 90  OR  partitionIndex = 91  OR  partitionIn dex = 105 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 124  OR  partitionIndex = 151  OR  partitionIndex = 15 2  OR  partitionIndex = 153  OR  partitionIndex = 165  OR  partitionIndex = 166  OR  partitionIndex = 167  OR  part itionIndex = 168 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 104  OR  partitionIndex = 105  OR  partitionIndex = 11 9  OR  partitionIndex = 120  OR  partitionIndex = 120  OR  partitionIndex = 121  OR  partitionIndex = 135  OR  part itionIndex = 136 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 4  OR  partitionIndex = 5  OR  partitionIndex = 6  OR   partitionIndex = 7  OR  partitionIndex = 19  OR  partitionIndex = 20  OR  partitionIndex = 21  OR  partitionIndex  = 22 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 25  OR  partitionIndex = 26  OR  partitionIndex = 38   OR  partitionIndex = 39  OR  partitionIndex = 40  OR  partitionIndex = 41  OR  partitionIndex = 53  OR  partitionIn dex = 54 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 72  OR  partitionIndex = 99  OR  partitionIndex = 100   OR  partitionIndex = 101  OR  partitionIndex = 113  OR  partitionIndex = 114  OR  partitionIndex = 115  OR  partit ionIndex = 116 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 164  OR  partitionIndex = 165  OR  partitionIndex = 17 9  OR  partitionIndex = 180  OR  partitionIndex = 188  OR  partitionIndex = 189  OR  partitionIndex = 203  OR  part itionIndex = 204 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 190  OR  partitionIndex = 191  OR  partitionIndex = 20 5  OR  partitionIndex = 206  OR  partitionIndex = 218  OR  partitionIndex = 219  OR  partitionIndex = 233  OR  part itionIndex = 234 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 126  OR  partitionIndex = 127  OR  partitionIndex = 13 9  OR  partitionIndex = 140  OR  partitionIndex = 141  OR  partitionIndex = 142  OR  partitionIndex = 154  OR  part itionIndex = 155 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 158  OR  partitionIndex = 159  OR  partitionIndex = 16 0  OR  partitionIndex = 161  OR  partitionIndex = 173  OR  partitionIndex = 174  OR  partitionIndex = 175  OR  part itionIndex = 176 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 138  OR  partitionIndex = 150  OR  partitionIndex = 15 1  OR  partitionIndex = 152  OR  partitionIndex = 153  OR  partitionIndex = 165  OR  partitionIndex = 166  OR  part itionIndex = 167 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 145  OR  partitionIndex = 146  OR  partitionIndex = 15 8  OR  partitionIndex = 159  OR  partitionIndex = 160  OR  partitionIndex = 161  OR  partitionIndex = 173  OR  part itionIndex = 174 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 201  OR  partitionIndex = 202  OR  partitionIndex = 21 4  OR  partitionIndex = 215  OR  partitionIndex = 216  OR  partitionIndex = 217  OR  partitionIndex = 229  OR  part itionIndex = 230 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 2  OR  partitionIndex = 3  OR  partitionIndex = 16  OR   partitionIndex = 17  OR  partitionIndex = 18  OR  partitionIndex = 30  OR  partitionIndex = 31  OR  partitionInde x = 45 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 81  OR  partitionIndex = 82  OR  partitionIndex = 94   OR  partitionIndex = 95  OR  partitionIndex = 96  OR  partitionIndex = 97  OR  partitionIndex = 109  OR  partitionI ndex = 110 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 128  OR  partitionIndex = 129  OR  partitionIndex = 14 3  OR  partitionIndex = 144  OR  partitionIndex = 216  OR  partitionIndex = 217  OR  partitionIndex = 231  OR  part itionIndex = 232 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 128  OR  partitionIndex = 129  OR  partitionIndex = 13 0  OR  partitionIndex = 143  OR  partitionIndex = 144  OR  partitionIndex = 217  OR  partitionIndex = 231  OR  part itionIndex = 232 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 64  OR  partitionIndex = 91  OR  partitionIndex = 92   OR  partitionIndex = 93  OR  partitionIndex = 105  OR  partitionIndex = 106  OR  partitionIndex = 107  OR  partitio nIndex = 108 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 34  OR  partitionIndex = 35  OR  partitionIndex = 36   OR  partitionIndex = 37  OR  partitionIndex = 49  OR  partitionIndex = 50  OR  partitionIndex = 51  OR  partitionIn dex = 52 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 122  OR  partitionIndex = 123  OR  partitionIndex = 13 6  OR  partitionIndex = 137  OR  partitionIndex = 138  OR  partitionIndex = 150  OR  partitionIndex = 151  OR  part itionIndex = 165 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 94  OR  partitionIndex = 95  OR  partitionIndex = 96   OR  partitionIndex = 97  OR  partitionIndex = 109  OR  partitionIndex = 110  OR  partitionIndex = 111  OR  partitio nIndex = 112 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 66  OR  partitionIndex = 67  OR  partitionIndex = 81   OR  partitionIndex = 82  OR  partitionIndex = 94  OR  partitionIndex = 95  OR  partitionIndex = 109  OR  partitionI ndex = 110 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 7  OR  partitionIndex = 21  OR  partitionIndex = 22  O R  partitionIndex = 34  OR  partitionIndex = 35  OR  partitionIndex = 36  OR  partitionIndex = 49  OR  partitionInd ex = 50 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 184  OR  partitionIndex = 211  OR  partitionIndex = 21 2  OR  partitionIndex = 213  OR  partitionIndex = 225  OR  partitionIndex = 226  OR  partitionIndex = 227  OR  part itionIndex = 228 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 2  OR  partitionIndex = 3  OR  partitionIndex = 17  OR   partitionIndex = 18  OR  partitionIndex = 30  OR  partitionIndex = 31  OR  partitionIndex = 45  OR  partitionInde x = 46 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 121  OR  partitionIndex = 122  OR  partitionIndex = 12 3  OR  partitionIndex = 135  OR  partitionIndex = 136  OR  partitionIndex = 137  OR  partitionIndex = 138  OR  part itionIndex = 150 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 206  OR  partitionIndex = 218  OR  partitionIndex = 21 9  OR  partitionIndex = 220  OR  partitionIndex = 221  OR  partitionIndex = 233  OR  partitionIndex = 234  OR  part itionIndex = 235 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 184  OR  partitionIndex = 185  OR  partitionIndex = 18 6  OR  partitionIndex = 187  OR  partitionIndex = 199  OR  partitionIndex = 200  OR  partitionIndex = 201  OR  part itionIndex = 228 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 124  OR  partitionIndex = 125  OR  partitionIndex = 12 6  OR  partitionIndex = 139  OR  partitionIndex = 140  OR  partitionIndex = 153  OR  partitionIndex = 167  OR  part itionIndex = 168 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 9  OR  partitionIndex = 10  OR  partitionIndex = 11  O R  partitionIndex = 23  OR  partitionIndex = 24  OR  partitionIndex = 25  OR  partitionIndex = 26  OR  partitionInd ex = 38 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 8  OR  partitionIndex = 9  OR  partitionIndex = 10  OR   partitionIndex = 11  OR  partitionIndex = 23  OR  partitionIndex = 24  OR  partitionIndex = 111  OR  partitionInd ex = 112 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 77  OR  partitionIndex = 78  OR  partitionIndex = 90   OR  partitionIndex = 91  OR  partitionIndex = 92  OR  partitionIndex = 93  OR  partitionIndex = 105  OR  partitionI ndex = 106 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 132  OR  partitionIndex = 133  OR  partitionIndex = 13 4  OR  partitionIndex = 147  OR  partitionIndex = 148  OR  partitionIndex = 161  OR  partitionIndex = 175  OR  part itionIndex = 176 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 4  OR  partitionIndex = 5  OR  partitionIndex = 32  OR   partitionIndex = 33  OR  partitionIndex = 45  OR  partitionIndex = 46  OR  partitionIndex = 47  OR  partitionInde x = 48 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 124  OR  partitionIndex = 125  OR  partitionIndex = 12 6  OR  partitionIndex = 127  OR  partitionIndex = 139  OR  partitionIndex = 140  OR  partitionIndex = 167  OR  part itionIndex = 168 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 8  OR  partitionIndex = 9  OR  partitionIndex = 96  OR   partitionIndex = 97  OR  partitionIndex = 109  OR  partitionIndex = 110  OR  partitionIndex = 111  OR  partitionI ndex = 112 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 69  OR  partitionIndex = 70  OR  partitionIndex = 71   OR  partitionIndex = 83  OR  partitionIndex = 84  OR  partitionIndex = 85  OR  partitionIndex = 86  OR  partitionIn dex = 98 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 128  OR  partitionIndex = 129  OR  partitionIndex = 13 0  OR  partitionIndex = 131  OR  partitionIndex = 143  OR  partitionIndex = 144  OR  partitionIndex = 231  OR  part itionIndex = 232 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 192  OR  partitionIndex = 193  OR  partitionIndex = 20 7  OR  partitionIndex = 208  OR  partitionIndex = 220  OR  partitionIndex = 221  OR  partitionIndex = 235  OR  part itionIndex = 236 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 210  OR  partitionIndex = 211  OR  partitionIndex = 21 2  OR  partitionIndex = 213  OR  partitionIndex = 225  OR  partitionIndex = 226  OR  partitionIndex = 227  OR  part itionIndex = 228 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 132  OR  partitionIndex = 159  OR  partitionIndex = 16 0  OR  partitionIndex = 161  OR  partitionIndex = 173  OR  partitionIndex = 174  OR  partitionIndex = 175  OR  part itionIndex = 176 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 184  OR  partitionIndex = 185  OR  partitionIndex = 18 6  OR  partitionIndex = 187  OR  partitionIndex = 199  OR  partitionIndex = 200  OR  partitionIndex = 201  OR  part itionIndex = 202 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 192  OR  partitionIndex = 193  OR  partitionIndex = 19 4  OR  partitionIndex = 207  OR  partitionIndex = 208  OR  partitionIndex = 221  OR  partitionIndex = 235  OR  part itionIndex = 236 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 4  OR  partitionIndex = 5  OR  partitionIndex = 6  OR   partitionIndex = 7  OR  partitionIndex = 19  OR  partitionIndex = 20  OR  partitionIndex = 21  OR  partitionIndex  = 48 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 214  OR  partitionIndex = 215  OR  partitionIndex = 21 6  OR  partitionIndex = 217  OR  partitionIndex = 229  OR  partitionIndex = 230  OR  partitionIndex = 231  OR  part itionIndex = 232 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 119  OR  partitionIndex = 120  OR  partitionIndex = 12 0  OR  partitionIndex = 121  OR  partitionIndex = 122  OR  partitionIndex = 123  OR  partitionIndex = 135  OR  part itionIndex = 136 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 184  OR  partitionIndex = 185  OR  partitionIndex = 21 2  OR  partitionIndex = 213  OR  partitionIndex = 225  OR  partitionIndex = 226  OR  partitionIndex = 227  OR  part itionIndex = 228 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 184  OR  partitionIndex = 185  OR  partitionIndex = 19 9  OR  partitionIndex = 212  OR  partitionIndex = 213  OR  partitionIndex = 226  OR  partitionIndex = 227  OR  part itionIndex = 228 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 6  OR  partitionIndex = 7  OR  partitionIndex = 19  OR   partitionIndex = 20  OR  partitionIndex = 21  OR  partitionIndex = 22  OR  partitionIndex = 34  OR  partitionInde x = 35 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 185  OR  partitionIndex = 186  OR  partitionIndex = 18 7  OR  partitionIndex = 199  OR  partitionIndex = 200  OR  partitionIndex = 201  OR  partitionIndex = 202  OR  part itionIndex = 214 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 165  OR  partitionIndex = 179  OR  partitionIndex = 18 0  OR  partitionIndex = 188  OR  partitionIndex = 189  OR  partitionIndex = 190  OR  partitionIndex = 203  OR  part itionIndex = 204 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 134  OR  partitionIndex = 135  OR  partitionIndex = 14 9  OR  partitionIndex = 150  OR  partitionIndex = 162  OR  partitionIndex = 163  OR  partitionIndex = 177  OR  part itionIndex = 178 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 124  OR  partitionIndex = 125  OR  partitionIndex = 12 6  OR  partitionIndex = 127  OR  partitionIndex = 139  OR  partitionIndex = 140  OR  partitionIndex = 141  OR  part itionIndex = 168 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 90  OR  partitionIndex = 91  OR  partitionIndex = 92   OR  partitionIndex = 93  OR  partitionIndex = 105  OR  partitionIndex = 106  OR  partitionIndex = 107  OR  partitio nIndex = 108 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 98  OR  partitionIndex = 99  OR  partitionIndex = 100   OR  partitionIndex = 101  OR  partitionIndex = 113  OR  partitionIndex = 114  OR  partitionIndex = 115  OR  partit ionIndex = 116 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 64  OR  partitionIndex = 65  OR  partitionIndex = 79   OR  partitionIndex = 80  OR  partitionIndex = 92  OR  partitionIndex = 93  OR  partitionIndex = 107  OR  partitionI ndex = 108 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 15  OR  partitionIndex = 29  OR  partitionIndex = 30   OR  partitionIndex = 42  OR  partitionIndex = 43  OR  partitionIndex = 44  OR  partitionIndex = 57  OR  partitionIn dex = 58 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 123  OR  partitionIndex = 137  OR  partitionIndex = 13 8  OR  partitionIndex = 150  OR  partitionIndex = 151  OR  partitionIndex = 152  OR  partitionIndex = 165  OR  part itionIndex = 166 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 105  OR  partitionIndex = 119  OR  partitionIndex = 12 0  OR  partitionIndex = 120  OR  partitionIndex = 121  OR  partitionIndex = 122  OR  partitionIndex = 135  OR  part itionIndex = 136 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 192  OR  partitionIndex = 193  OR  partitionIndex = 19 4  OR  partitionIndex = 195  OR  partitionIndex = 207  OR  partitionIndex = 208  OR  partitionIndex = 209  OR  part itionIndex = 236 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 44  OR  partitionIndex = 45  OR  partitionIndex = 58   OR  partitionIndex = 59  OR  partitionIndex = 60  OR  partitionIndex = 68  OR  partitionIndex = 69  OR  partitionIn dex = 83 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 14  OR  partitionIndex = 15  OR  partitionIndex = 29   OR  partitionIndex = 30  OR  partitionIndex = 42  OR  partitionIndex = 43  OR  partitionIndex = 57  OR  partitionIn dex = 58 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 72  OR  partitionIndex = 73  OR  partitionIndex = 87   OR  partitionIndex = 88  OR  partitionIndex = 100  OR  partitionIndex = 101  OR  partitionIndex = 115  OR  partitio nIndex = 116 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 180  OR  partitionIndex = 188  OR  partitionIndex = 18 9  OR  partitionIndex = 190  OR  partitionIndex = 191  OR  partitionIndex = 203  OR  partitionIndex = 204  OR  part itionIndex = 205 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 124  OR  partitionIndex = 125  OR  partitionIndex = 13 9  OR  partitionIndex = 140  OR  partitionIndex = 152  OR  partitionIndex = 153  OR  partitionIndex = 167  OR  part itionIndex = 168 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 35  OR  partitionIndex = 36  OR  partitionIndex = 37   OR  partitionIndex = 49  OR  partitionIndex = 50  OR  partitionIndex = 51  OR  partitionIndex = 52  OR  partitionIn dex = 60 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 12  OR  partitionIndex = 13  OR  partitionIndex = 40   OR  partitionIndex = 41  OR  partitionIndex = 53  OR  partitionIndex = 54  OR  partitionIndex = 55  OR  partitionIn dex = 56 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 13  OR  partitionIndex = 14  OR  partitionIndex = 15   OR  partitionIndex = 27  OR  partitionIndex = 28  OR  partitionIndex = 29  OR  partitionIndex = 30  OR  partitionIn dex = 42 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 125  OR  partitionIndex = 126  OR  partitionIndex = 12 7  OR  partitionIndex = 139  OR  partitionIndex = 140  OR  partitionIndex = 141  OR  partitionIndex = 142  OR  part itionIndex = 154 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 72  OR  partitionIndex = 73  OR  partitionIndex = 74   OR  partitionIndex = 75  OR  partitionIndex = 87  OR  partitionIndex = 88  OR  partitionIndex = 89  OR  partitionIn dex = 90 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 66  OR  partitionIndex = 67  OR  partitionIndex = 80   OR  partitionIndex = 81  OR  partitionIndex = 82  OR  partitionIndex = 94  OR  partitionIndex = 95  OR  partitionIn dex = 109 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 12  OR  partitionIndex = 13  OR  partitionIndex = 14   OR  partitionIndex = 27  OR  partitionIndex = 28  OR  partitionIndex = 41  OR  partitionIndex = 55  OR  partitionIn dex = 56 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 164  OR  partitionIndex = 165  OR  partitionIndex = 17 7  OR  partitionIndex = 178  OR  partitionIndex = 179  OR  partitionIndex = 180  OR  partitionIndex = 188  OR  part itionIndex = 189 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 198  OR  partitionIndex = 210  OR  partitionIndex = 21 1  OR  partitionIndex = 212  OR  partitionIndex = 213  OR  partitionIndex = 225  OR  partitionIndex = 226  OR  part itionIndex = 227 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 12  OR  partitionIndex = 13  OR  partitionIndex = 27   OR  partitionIndex = 40  OR  partitionIndex = 41  OR  partitionIndex = 54  OR  partitionIndex = 55  OR  partitionIn dex = 56 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 14  OR  partitionIndex = 15  OR  partitionIndex = 27   OR  partitionIndex = 28  OR  partitionIndex = 29  OR  partitionIndex = 30  OR  partitionIndex = 42  OR  partitionIn dex = 43 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 44  OR  partitionIndex = 45  OR  partitionIndex = 59   OR  partitionIndex = 60  OR  partitionIndex = 68  OR  partitionIndex = 69  OR  partitionIndex = 83  OR  partitionIn dex = 84 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 8  OR  partitionIndex = 9  OR  partitionIndex = 10  OR   partitionIndex = 23  OR  partitionIndex = 24  OR  partitionIndex = 97  OR  partitionIndex = 111  OR  partitionInd ex = 112 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 132  OR  partitionIndex = 133  OR  partitionIndex = 14 7  OR  partitionIndex = 160  OR  partitionIndex = 161  OR  partitionIndex = 174  OR  partitionIndex = 175  OR  part itionIndex = 176 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 6  OR  partitionIndex = 7  OR  partitionIndex = 21  OR   partitionIndex = 22  OR  partitionIndex = 34  OR  partitionIndex = 35  OR  partitionIndex = 49  OR  partitionInde x = 50 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 64  OR  partitionIndex = 65  OR  partitionIndex = 66   OR  partitionIndex = 67  OR  partitionIndex = 79  OR  partitionIndex = 80  OR  partitionIndex = 81  OR  partitionIn dex = 108 ", 8),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 126  OR  partitionIndex = 127  OR  partitionIndex = 14 0  OR  partitionIndex = 141  OR  partitionIndex = 142  OR  partitionIndex = 154  OR  partitionIndex = 155  OR  part itionIndex = 169 ", 8)
+     | )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 21  OR  partitionIndex = 22  OR  partitionIndex = 34  OR  partitionIndex = 35  OR  partitionIndex = 36  OR  partitionIndex = 37  OR  partitionIndex = 49  OR  partitionIndex = 50 ",8), ("SELECT imageBytes FROM data WHERE  partitionIndex = 60  OR  partitionIndex = 68  OR  partitionIndex = 69  OR  partitionIndex = 70  OR  partitionIndex = 71  OR  partitionIndex = 83  OR  partitionIndex = 84  OR  partitionIndex = 85 ",8), ("SELECT imageBytes FROM data WHERE  partitionIndex = 42  OR  partitionIndex = 43  OR  partitionIndex = 44  OR  partitionIndex = 45  OR  partitionIndex = 57  OR  partitionIndex = 58  OR  partitionIndex = 59  OR  partitionIndex = 60 ",8), ("SELECT imageBytes FROM data WHERE  partitionI...
+scala> 
+
+scala> val sqlContext = new org.apache.spark.sql.hive.HiveContext(sc)
+warning: there was one deprecation warning; re-run with -deprecation for details
+sqlContext: org.apache.spark.sql.hive.HiveContext = org.apache.spark.sql.hive.HiveContext@1c11a496
+
+scala> 
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 3.990537084 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 0:>                                                        (0 + 0) / 113][Stage 0:>                                                      (0 + 112) / 113][Stage 0:>                                                      (0 + 113) / 113][Stage 0:====================>                                  (43 + 70) / 113][Stage 0:======================>                                (46 + 67) / 113][Stage 0:============================>                          (58 + 55) / 113][Stage 0:=============================>                         (60 + 53) / 113][Stage 0:===============================>                       (64 + 49) / 113][Stage 0:===================================>                   (73 + 40) / 113][Stage 0:=========================================>             (85 + 28) / 113][Stage 0:===========================================>           (90 + 23) / 113][Stage 0:================================================>     (101 + 12) / 113][Stage 0:======================================================>(111 + 2) / 113][Stage 0:======================================================>(112 + 1) / 113]                                                                                [Stage 1:===========================>                           (56 + 58) / 114][Stage 1:============================>                          (59 + 55) / 114][Stage 1:===============================>                       (65 + 49) / 114][Stage 1:====================================>                  (76 + 38) / 114][Stage 1:========================================>              (84 + 30) / 114][Stage 1:===========================================>           (91 + 23) / 114][Stage 1:===============================================>      (100 + 14) / 114][Stage 1:===================================================>   (107 + 7) / 114][Stage 1:=====================================================> (110 + 4) / 114][Stage 1:======================================================>(112 + 2) / 114]                                                                                Time elapsed: 14.780194697 seconds
+res2: Int = 0
+
+scala> 
+
+scala> for (query <- queries){
+     | println(s">> Running query: ${query._1}")
+     | show_timing{sqlContext.sql(query._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, index) = > (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+     | }
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 21  OR  partitionIndex = 22  OR  partitionIndex = 34  OR  partitionIndex = 35  OR  partitionIndex = 36  OR  partitionIndex = 37  OR  partitionIndex = 49  OR  partitionIndex = 50 
+[Stage 2:========================>                              (50 + 63) / 113][Stage 2:===========================>                           (57 + 56) / 113][Stage 2:============================>                          (59 + 54) / 113][Stage 2:=============================>                         (61 + 52) / 113][Stage 2:================================>                      (66 + 47) / 113][Stage 2:===================================>                   (73 + 40) / 113][Stage 2:==========================================>            (88 + 25) / 113][Stage 2:==================================================>    (104 + 9) / 113][Stage 2:=====================================================> (110 + 3) / 113]                                                                                [Stage 3:===========================>                           (57 + 57) / 114][Stage 3:==============================>                        (63 + 51) / 114][Stage 3:==================================>                    (72 + 42) / 114][Stage 3:======================================>                (80 + 34) / 114][Stage 3:========================================>              (84 + 30) / 114][Stage 3:===========================================>           (91 + 23) / 114][Stage 3:===================================================>   (106 + 8) / 114][Stage 3:======================================================>(113 + 1) / 114]                                                                                Time elapsed: 6.108394056 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 60  OR  partitionIndex = 68  OR  partitionIndex = 69  OR  partitionIndex = 70  OR  partitionIndex = 71  OR  partitionIndex = 83  OR  partitionIndex = 84  OR  partitionIndex = 85 
+[Stage 4:=====================>                                 (45 + 68) / 113][Stage 4:============================>                          (58 + 55) / 113][Stage 4:=============================>                         (60 + 53) / 113][Stage 4:=============================>                         (61 + 52) / 113][Stage 4:===================================>                   (72 + 41) / 113][Stage 4:========================================>              (83 + 30) / 113][Stage 4:=============================================>         (93 + 20) / 113][Stage 4:==================================================>    (104 + 9) / 113][Stage 4:======================================================>(111 + 2) / 113]                                                                                [Stage 5:===========================>                           (58 + 56) / 114][Stage 5:==============================>                        (63 + 51) / 114][Stage 5:==================================>                    (72 + 42) / 114][Stage 5:=========================================>             (85 + 29) / 114][Stage 5:=============================================>         (94 + 20) / 114][Stage 5:===================================================>   (106 + 8) / 114][Stage 5:=====================================================> (110 + 4) / 114][Stage 5:======================================================>(112 + 2) / 114]                                                                                Time elapsed: 5.915889317 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 42  OR  partitionIndex = 43  OR  partitionIndex = 44  OR  partitionIndex = 45  OR  partitionIndex = 57  OR  partitionIndex = 58  OR  partitionIndex = 59  OR  partitionIndex = 60 
+[Stage 6:============================>                          (58 + 55) / 113][Stage 6:================================>                      (67 + 46) / 113][Stage 6:======================================>                (80 + 33) / 113][Stage 6:==========================================>            (87 + 26) / 113][Stage 6:================================================>      (99 + 14) / 113][Stage 6:=====================================================> (109 + 4) / 113]                                                                                [Stage 7:============================>                          (60 + 54) / 114][Stage 7:=================================>                     (70 + 44) / 114][Stage 7:======================================>                (79 + 35) / 114][Stage 7:==========================================>            (88 + 26) / 114][Stage 7:============================================>          (93 + 21) / 114][Stage 7:====================================================>  (108 + 6) / 114][Stage 7:=====================================================> (111 + 3) / 114]                                                                                Time elapsed: 4.690172045 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 120  OR  partitionIndex = 121  OR  partitionIndex = 122  OR  partitionIndex = 123  OR  partitionIndex = 135  OR  partitionIndex = 136  OR  partitionIndex = 137  OR  partitionIndex = 138 
+[Stage 8:===========================>                           (57 + 56) / 113][Stage 8:=============================>                         (60 + 53) / 113][Stage 8:================================>                      (66 + 47) / 113][Stage 8:=========================================>             (86 + 27) / 113][Stage 8:===============================================>       (98 + 15) / 113][Stage 8:===================================================>   (105 + 8) / 113][Stage 8:=====================================================> (110 + 3) / 113][Stage 8:======================================================>(112 + 1) / 113]                                                                                [Stage 9:===========================>                           (58 + 56) / 114][Stage 9:=============================>                         (62 + 52) / 114][Stage 9:================================>                      (67 + 47) / 114][Stage 9:=====================================>                 (77 + 37) / 114][Stage 9:===============================================>       (99 + 15) / 114][Stage 9:====================================================>  (109 + 5) / 114]                                                                                Time elapsed: 4.478536133 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 132  OR  partitionIndex = 133  OR  partitionIndex = 147  OR  partitionIndex = 148  OR  partitionIndex = 160  OR  partitionIndex = 161  OR  partitionIndex = 175  OR  partitionIndex = 176 
+[Stage 10:===========================>                          (57 + 56) / 113][Stage 10:============================>                         (59 + 54) / 113][Stage 10:================================>                     (67 + 46) / 113][Stage 10:======================================>               (80 + 33) / 113][Stage 10:===========================================>          (91 + 22) / 113][Stage 10:==============================================>      (100 + 13) / 113][Stage 10:===================================================>  (107 + 6) / 113][Stage 10:=====================================================>(111 + 2) / 113]                                                                                [Stage 11:===========================>                          (58 + 56) / 114][Stage 11:=============================>                        (63 + 51) / 114][Stage 11:====================================>                 (78 + 36) / 114][Stage 11:=============================================>        (95 + 19) / 114][Stage 11:===================================================>  (109 + 5) / 114][Stage 11:=====================================================>(113 + 1) / 114]                                                                                Time elapsed: 4.770008196 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 141  OR  partitionIndex = 142  OR  partitionIndex = 154  OR  partitionIndex = 155  OR  partitionIndex = 156  OR  partitionIndex = 157  OR  partitionIndex = 169  OR  partitionIndex = 170 
+[Stage 12:===========================>                          (58 + 55) / 113][Stage 12:==============================>                       (63 + 50) / 113][Stage 12:==================================>                   (73 + 40) / 113][Stage 12:===========================================>          (91 + 22) / 113][Stage 12:==============================================>      (100 + 13) / 113][Stage 12:=====================================================>(111 + 2) / 113]                                                                                [Stage 13:============================>                         (60 + 54) / 114][Stage 13:================================>                     (69 + 45) / 114][Stage 13:=======================================>              (84 + 30) / 114][Stage 13:=============================================>        (97 + 17) / 114][Stage 13:==================================================>   (107 + 7) / 114][Stage 13:====================================================> (111 + 3) / 114][Stage 13:=====================================================>(113 + 1) / 114]                                                                                Time elapsed: 5.423865412 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 184  OR  partitionIndex = 185  OR  partitionIndex = 199  OR  partitionIndex = 200  OR  partitionIndex = 212  OR  partitionIndex = 213  OR  partitionIndex = 227  OR  partitionIndex = 228 
+[Stage 14:============================>                         (59 + 54) / 113][Stage 14:==============================>                       (64 + 49) / 113][Stage 14:===================================>                  (74 + 39) / 113][Stage 14:===========================================>          (91 + 22) / 113][Stage 14:===============================================>     (101 + 12) / 113][Stage 14:====================================================> (109 + 4) / 113]                                                                                [Stage 15:===========================>                          (59 + 55) / 114][Stage 15:===============================>                      (66 + 48) / 114][Stage 15:=====================================>                (79 + 35) / 114][Stage 15:=============================================>        (96 + 18) / 114][Stage 15:=================================================>    (105 + 9) / 114][Stage 15:=====================================================>(112 + 2) / 114]                                                                                Time elapsed: 4.257291911 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 72  OR  partitionIndex = 73  OR  partitionIndex = 74  OR  partitionIndex = 75  OR  partitionIndex = 87  OR  partitionIndex = 88  OR  partitionIndex = 89  OR  partitionIndex = 116 
+[Stage 16:============================>                         (59 + 54) / 113][Stage 16:==============================>                       (64 + 49) / 113][Stage 16:=====================================>                (79 + 34) / 113][Stage 16:=============================================>        (95 + 18) / 113][Stage 16:==============================================>      (100 + 13) / 113][Stage 16:===================================================>  (107 + 6) / 113][Stage 16:=====================================================>(112 + 1) / 113]                                                                                [Stage 17:=============================>                        (63 + 51) / 114][Stage 17:==================================>                   (73 + 41) / 114][Stage 17:========================================>             (86 + 28) / 114][Stage 17:===============================================>     (102 + 12) / 114][Stage 17:=================================================>    (105 + 9) / 114][Stage 17:=====================================================>(112 + 2) / 114][Stage 17:=====================================================>(113 + 1) / 114]                                                                                Time elapsed: 4.954294675 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 130  OR  partitionIndex = 131  OR  partitionIndex = 145  OR  partitionIndex = 146  OR  partitionIndex = 158  OR  partitionIndex = 159  OR  partitionIndex = 173  OR  partitionIndex = 174 
+17/05/25 14:17:07 WARN repl.Signaling: Cancelling all active jobs, this can take a while. Press Ctrl+C again to exit now.
+17/05/25 14:17:07 WARN scheduler.TaskSetManager: Lost task 111.0 in stage 18.0 (TID 2154, 128.110.152.12, executor 13): TaskKilled (killed intentionally)
+17/05/25 14:17:07 ERROR server.TransportRequestHandler: Error while invoking RpcHandler#receive() for one-way message.
+org.apache.spark.SparkException: Could not find CoarseGrainedScheduler.
+	at org.apache.spark.rpc.netty.Dispatcher.postMessage(Dispatcher.scala:154)
+	at org.apache.spark.rpc.netty.Dispatcher.postOneWayMessage(Dispatcher.scala:134)
+	at org.apache.spark.rpc.netty.NettyRpcHandler.receive(NettyRpcEnv.scala:570)
+	at org.apache.spark.network.server.TransportRequestHandler.processOneWayMessage(TransportRequestHandler.java:180)
+	at org.apache.spark.network.server.TransportRequestHandler.handle(TransportRequestHandler.java:109)
+	at org.apache.spark.network.server.TransportChannelHandler.channelRead0(TransportChannelHandler.java:119)
+	at org.apache.spark.network.server.TransportChannelHandler.channelRead0(TransportChannelHandler.java:51)
+	at io.netty.channel.SimpleChannelInboundHandler.channelRead(SimpleChannelInboundHandler.java:105)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:367)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:353)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:346)
+	at io.netty.handler.timeout.IdleStateHandler.channelRead(IdleStateHandler.java:266)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:367)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:353)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:346)
+	at io.netty.handler.codec.MessageToMessageDecoder.channelRead(MessageToMessageDecoder.java:102)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:367)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:353)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:346)
+	at org.apache.spark.network.util.TransportFrameDecoder.channelRead(TransportFrameDecoder.java:85)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:367)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:353)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:346)
+	at io.netty.channel.DefaultChannelPipeline$HeadContext.channelRead(DefaultChannelPipeline.java:1294)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:367)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:353)
+	at io.netty.channel.DefaultChannelPipeline.fireChannelRead(DefaultChannelPipeline.java:911)
+	at io.netty.channel.nio.AbstractNioByteChannel$NioByteUnsafe.read(AbstractNioByteChannel.java:131)
+	at io.netty.channel.nio.NioEventLoop.processSelectedKey(NioEventLoop.java:652)
+	at io.netty.channel.nio.NioEventLoop.processSelectedKeysOptimized(NioEventLoop.java:575)
+	at io.netty.channel.nio.NioEventLoop.processSelectedKeys(NioEventLoop.java:489)
+	at io.netty.channel.nio.NioEventLoop.run(NioEventLoop.java:451)
+	at io.netty.util.concurrent.SingleThreadEventExecutor$2.run(SingleThreadEventExecutor.java:140)
+	at io.netty.util.concurrent.DefaultThreadFactory$DefaultRunnableDecorator.run(DefaultThreadFactory.java:144)
+	at java.lang.Thread.run(Thread.java:745)
+17/05/25 14:17:07 ERROR server.TransportRequestHandler: Error while invoking RpcHandler#receive() for one-way message.
+org.apache.spark.SparkException: Could not find CoarseGrainedScheduler.
+	at org.apache.spark.rpc.netty.Dispatcher.postMessage(Dispatcher.scala:154)
+	at org.apache.spark.rpc.netty.Dispatcher.postOneWayMessage(Dispatcher.scala:134)
+	at org.apache.spark.rpc.netty.NettyRpcHandler.receive(NettyRpcEnv.scala:570)
+	at org.apache.spark.network.server.TransportRequestHandler.processOneWayMessage(TransportRequestHandler.java:180)
+	at org.apache.spark.network.server.TransportRequestHandler.handle(TransportRequestHandler.java:109)
+	at org.apache.spark.network.server.TransportChannelHandler.channelRead0(TransportChannelHandler.java:119)
+	at org.apache.spark.network.server.TransportChannelHandler.channelRead0(TransportChannelHandler.java:51)
+	at io.netty.channel.SimpleChannelInboundHandler.channelRead(SimpleChannelInboundHandler.java:105)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:367)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:353)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:346)
+	at io.netty.handler.timeout.IdleStateHandler.channelRead(IdleStateHandler.java:266)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:367)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:353)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:346)
+	at io.netty.handler.codec.MessageToMessageDecoder.channelRead(MessageToMessageDecoder.java:102)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:367)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:353)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:346)
+	at org.apache.spark.network.util.TransportFrameDecoder.channelRead(TransportFrameDecoder.java:85)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:367)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:353)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:346)
+	at io.netty.channel.DefaultChannelPipeline$HeadContext.channelRead(DefaultChannelPipeline.java:1294)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:367)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:353)
+	at io.netty.channel.DefaultChannelPipeline.fireChannelRead(DefaultChannelPipeline.java:911)
+	at io.netty.channel.nio.AbstractNioByteChannel$NioByteUnsafe.read(AbstractNioByteChannel.java:131)
+	at io.netty.channel.nio.NioEventLoop.processSelectedKey(NioEventLoop.java:652)
+	at io.netty.channel.nio.NioEventLoop.processSelectedKeysOptimized(NioEventLoop.java:575)
+	at io.netty.channel.nio.NioEventLoop.processSelectedKeys(NioEventLoop.java:489)
+	at io.netty.channel.nio.NioEventLoop.run(NioEventLoop.java:451)
+	at io.netty.util.concurrent.SingleThreadEventExecutor$2.run(SingleThreadEventExecutor.java:140)
+	at io.netty.util.concurrent.DefaultThreadFactory$DefaultRunnableDecorator.run(DefaultThreadFactory.java:144)
+	at java.lang.Thread.run(Thread.java:745)
+17/05/25 14:17:07 ERROR server.TransportRequestHandler: Error while invoking RpcHandler#receive() for one-way message.
+org.apache.spark.SparkException: Could not find CoarseGrainedScheduler.
+	at org.apache.spark.rpc.netty.Dispatcher.postMessage(Dispatcher.scala:154)
+	at org.apache.spark.rpc.netty.Dispatcher.postOneWayMessage(Dispatcher.scala:134)
+	at org.apache.spark.rpc.netty.NettyRpcHandler.receive(NettyRpcEnv.scala:570)
+	at org.apache.spark.network.server.TransportRequestHandler.processOneWayMessage(TransportRequestHandler.java:180)
+	at org.apache.spark.network.server.TransportRequestHandler.handle(TransportRequestHandler.java:109)
+	at org.apache.spark.network.server.TransportChannelHandler.channelRead0(TransportChannelHandler.java:119)
+	at org.apache.spark.network.server.TransportChannelHandler.channelRead0(TransportChannelHandler.java:51)
+	at io.netty.channel.SimpleChannelInboundHandler.channelRead(SimpleChannelInboundHandler.java:105)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:367)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:353)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:346)
+	at io.netty.handler.timeout.IdleStateHandler.channelRead(IdleStateHandler.java:266)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:367)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:353)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:346)
+	at io.netty.handler.codec.MessageToMessageDecoder.channelRead(MessageToMessageDecoder.java:102)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:367)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:353)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:346)
+	at org.apache.spark.network.util.TransportFrameDecoder.channelRead(TransportFrameDecoder.java:85)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:367)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:353)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:346)
+	at io.netty.channel.DefaultChannelPipeline$HeadContext.channelRead(DefaultChannelPipeline.java:1294)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:367)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:353)
+	at io.netty.channel.DefaultChannelPipeline.fireChannelRead(DefaultChannelPipeline.java:911)
+	at io.netty.channel.nio.AbstractNioByteChannel$NioByteUnsafe.read(AbstractNioByteChannel.java:131)
+	at io.netty.channel.nio.NioEventLoop.processSelectedKey(NioEventLoop.java:652)
+	at io.netty.channel.nio.NioEventLoop.processSelectedKeysOptimized(NioEventLoop.java:575)
+	at io.netty.channel.nio.NioEventLoop.processSelectedKeys(NioEventLoop.java:489)
+	at io.netty.channel.nio.NioEventLoop.run(NioEventLoop.java:451)
+	at io.netty.util.concurrent.SingleThreadEventExecutor$2.run(SingleThreadEventExecutor.java:140)
+	at io.netty.util.concurrent.DefaultThreadFactory$DefaultRunnableDecorator.run(DefaultThreadFactory.java:144)
+	at java.lang.Thread.run(Thread.java:745)
+17/05/25 14:17:07 ERROR server.TransportRequestHandler: Error while invoking RpcHandler#receive() for one-way message.
+org.apache.spark.rpc.RpcEnvStoppedException: RpcEnv already stopped.
+	at org.apache.spark.rpc.netty.Dispatcher.postMessage(Dispatcher.scala:152)
+	at org.apache.spark.rpc.netty.Dispatcher.postOneWayMessage(Dispatcher.scala:134)
+	at org.apache.spark.rpc.netty.NettyRpcHandler.receive(NettyRpcEnv.scala:570)
+	at org.apache.spark.network.server.TransportRequestHandler.processOneWayMessage(TransportRequestHandler.java:180)
+	at org.apache.spark.network.server.TransportRequestHandler.handle(TransportRequestHandler.java:109)
+	at org.apache.spark.network.server.TransportChannelHandler.channelRead0(TransportChannelHandler.java:119)
+	at org.apache.spark.network.server.TransportChannelHandler.channelRead0(TransportChannelHandler.java:51)
+	at io.netty.channel.SimpleChannelInboundHandler.channelRead(SimpleChannelInboundHandler.java:105)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:367)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:353)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:346)
+	at io.netty.handler.timeout.IdleStateHandler.channelRead(IdleStateHandler.java:266)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:367)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:353)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:346)
+	at io.netty.handler.codec.MessageToMessageDecoder.channelRead(MessageToMessageDecoder.java:102)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:367)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:353)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:346)
+	at org.apache.spark.network.util.TransportFrameDecoder.channelRead(TransportFrameDecoder.java:85)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:367)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:353)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:346)
+	at io.netty.channel.DefaultChannelPipeline$HeadContext.channelRead(DefaultChannelPipeline.java:1294)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:367)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:353)
+	at io.netty.channel.DefaultChannelPipeline.fireChannelRead(DefaultChannelPipeline.java:911)
+	at io.netty.channel.nio.AbstractNioByteChannel$NioByteUnsafe.read(AbstractNioByteChannel.java:131)
+	at io.netty.channel.nio.NioEventLoop.processSelectedKey(NioEventLoop.java:652)
+	at io.netty.channel.nio.NioEventLoop.processSelectedKeysOptimized(NioEventLoop.java:575)
+	at io.netty.channel.nio.NioEventLoop.processSelectedKeys(NioEventLoop.java:489)
+	at io.netty.channel.nio.NioEventLoop.run(NioEventLoop.java:451)
+	at io.netty.util.concurrent.SingleThreadEventExecutor$2.run(SingleThreadEventExecutor.java:140)
+	at io.netty.util.concurrent.DefaultThreadFactory$DefaultRunnableDecorator.run(DefaultThreadFactory.java:144)
+	at java.lang.Thread.run(Thread.java:745)
+17/05/25 14:17:07 WARN netty.Dispatcher: Message RemoteProcessDisconnected(128.110.152.34:44712) dropped. RpcEnv already stopped.
+17/05/25 14:17:07 WARN netty.Dispatcher: Message RemoteProcessDisconnected(128.110.152.34:44712) dropped. RpcEnv already stopped.
+org.apache.spark.SparkException: Job 18 cancelled as part of cancellation of all jobs
+  at org.apache.spark.scheduler.DAGScheduler.org$apache$spark$scheduler$DAGScheduler$$failJobAndIndependentStages(DAGScheduler.scala:1435)
+  at org.apache.spark.scheduler.DAGScheduler.handleJobCancellation(DAGScheduler.scala:1375)
+  at org.apache.spark.scheduler.DAGScheduler$$anonfun$doCancelAllJobs$1.apply$mcVI$sp(DAGScheduler.scala:721)
+  at org.apache.spark.scheduler.DAGScheduler$$anonfun$doCancelAllJobs$1.apply(DAGScheduler.scala:721)
+  at org.apache.spark.scheduler.DAGScheduler$$anonfun$doCancelAllJobs$1.apply(DAGScheduler.scala:721)
+  at scala.collection.mutable.HashSet.foreach(HashSet.scala:78)
+  at org.apache.spark.scheduler.DAGScheduler.doCancelAllJobs(DAGScheduler.scala:721)
+  at org.apache.spark.scheduler.DAGSchedulerEventProcessLoop.doOnReceive(DAGScheduler.scala:1628)
+  at org.apache.spark.scheduler.DAGSchedulerEventProcessLoop.onReceive(DAGScheduler.scala:1605)
+  at org.apache.spark.scheduler.DAGSchedulerEventProcessLoop.onReceive(DAGScheduler.scala:1594)
+  at org.apache.spark.util.EventLoop$$anon$1.run(EventLoop.scala:48)
+  at org.apache.spark.scheduler.DAGScheduler.runJob(DAGScheduler.scala:628)
+  at org.apache.spark.SparkContext.runJob(SparkContext.scala:1918)
+  at org.apache.spark.SparkContext.runJob(SparkContext.scala:1931)
+  at org.apache.spark.SparkContext.runJob(SparkContext.scala:1944)
+  at org.apache.spark.rdd.ZippedWithIndexRDD.<init>(ZippedWithIndexRDD.scala:50)
+  at org.apache.spark.rdd.RDD$$anonfun$zipWithIndex$1.apply(RDD.scala:1293)
+  at org.apache.spark.rdd.RDD$$anonfun$zipWithIndex$1.apply(RDD.scala:1293)
+  at org.apache.spark.rdd.RDDOperationScope$.withScope(RDDOperationScope.scala:151)
+  at org.apache.spark.rdd.RDDOperationScope$.withScope(RDDOperationScope.scala:112)
+  at org.apache.spark.rdd.RDD.withScope(RDD.scala:362)
+  at org.apache.spark.rdd.RDD.zipWithIndex(RDD.scala:1292)
+  at $anonfun$1$$anonfun$apply$1.apply$mcI$sp(<console>:40)
+  at $anonfun$1$$anonfun$apply$1.apply(<console>:40)
+  at $anonfun$1$$anonfun$apply$1.apply(<console>:40)
+  at show_timing(<console>:30)
+  at $anonfun$1.apply(<console>:40)
+  at $anonfun$1.apply(<console>:38)
+  at scala.collection.immutable.List.foreach(List.scala:381)
+  ... 53 elided
+
+scala> 
+
+scala> :quit
+
+real	1m50.743s
+user	3m54.188s
+sys	0m12.124s

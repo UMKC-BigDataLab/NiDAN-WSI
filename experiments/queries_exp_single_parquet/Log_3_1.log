@@ -1,0 +1,130 @@
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+17/04/24 11:08:31 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/04/24 11:08:45 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/04/24 11:08:45 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/04/24 11:08:46 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+17/04/24 11:08:48 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/04/24 11:08:59 WARN metastore.ObjectStore: Failed to get database global_temp, returning NoSuchObjectException
+Spark context Web UI available at http://128.110.152.45:4040
+Spark context available as 'sc' (master = spark://ctl:7077, app id = app-20170424110848-0084).
+Spark session available as 'spark'.
+Welcome to
+      ____              __
+     / __/__  ___ _____/ /__
+    _\ \/ _ \/ _ `/ __/  '_/
+   /___/ .__/\_,_/_/ /_/\_\   version 2.1.0
+      /_/
+         
+Using Scala version 2.11.8 (OpenJDK 64-Bit Server VM, Java 1.8.0_121)
+Type in expressions to have them evaluated.
+Type :help for more information.
+
+scala> //spark-shell --master spark://ctl:7077 --driver-memory 28G  --executor-memory 28G  --executor-cores  8  --num-executors 16  --conf spark.io.compression.codec=lzf  --conf spark.akka.frameSize=1024  --conf spark .driver.maxResultSize=2g
+
+scala> 
+
+scala> 
+
+scala> import java.io.File
+import java.io.File
+
+scala> import java.io.FileOutputStream
+import java.io.FileOutputStream
+
+scala> 
+
+scala> val queryMsg = "#QUERY "
+queryMsg: String = "#QUERY "
+
+scala> val loadDBMsg = "#LOAD_DB "
+loadDBMsg: String = "#LOAD_DB "
+
+scala> val loadTable = "#LOAD_TABLE "
+loadTable: String = "#LOAD_TABLE "
+
+scala> val loadSqlContext = "#LOAD_SQL_CONTEXT "
+loadSqlContext: String = "#LOAD_SQL_CONTEXT "
+
+scala> val dataSource = "/nidan/parquet/Slides-uncompressed-256-ZINDEX.prqt"
+dataSource: String = /nidan/parquet/Slides-uncompressed-256-ZINDEX.prqt
+
+scala> 
+
+scala> def show_timing[T](proc: => T): T = {
+     |     val start=System.nanoTime()
+     |     val res = proc
+     |     val end = System.nanoTime()
+     |     println("Time elapsed: " + (end-start)/1000000000.0 + " seconds")
+     |     res
+     | }
+show_timing: [T](proc: => T)T
+
+scala> 
+
+scala> val writeToLocal = (in:(Array[Byte], Long, String)) =>{
+     |     val bytes = in._1
+     |     val output = in._3
+     |     
+     |     val writer = new FileOutputStream(output)
+     |     writer.write(bytes)
+     |     writer.close
+     |   }
+writeToLocal: ((Array[Byte], Long, String)) => Unit = <function1>
+
+scala> 
+
+scala> val queries = List(
+     | ("SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=1 and imageLevel = 0 a nd imageId = '1.svs'",1),
+     | ("SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=2 and imageLevel = 0 a nd imageId = '1.svs'",2),
+     | ("SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=4 and imageLevel = 0 a nd imageId = '1.svs'",4),
+     | ("SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=8 and imageLevel = 0 a nd imageId = '1.svs'",8)
+     | )
+queries: List[(String, Int)] = List((SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=1 and imageLevel = 0 and imageId = '1.svs',1), (SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=2 and imageLevel = 0 and imageId = '1.svs',2), (SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=4 and imageLevel = 0 and imageId = '1.svs',4), (SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=8 and imageLevel = 0 and imageId = '1.svs',8))
+
+scala> 
+
+scala> 
+
+scala> val sqlContext = show_timing{new org.apache.spark.sql.SQLContext(sc)}
+warning: there was one deprecation warning; re-run with -deprecation for details
+Time elapsed: 0.001311527 seconds
+sqlContext: org.apache.spark.sql.SQLContext = org.apache.spark.sql.SQLContext@25d5327
+
+scala> val pf = show_timing{sqlContext.read.parquet(dataSource)}
+Time elapsed: 7.292844757 seconds
+pf: org.apache.spark.sql.DataFrame = [imageId: string, imageLevel: int ... 8 more fields]
+
+scala> show_timing{pf.createOrReplaceTempView("data")}
+Time elapsed: 0.773535797 seconds
+
+scala> 
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (byt es, index) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 1:>                                                      (0 + 112) / 343][Stage 1:>                                                      (6 + 112) / 343][Stage 1:=>                                                     (7 + 112) / 343][Stage 1:=>                                                    (12 + 112) / 343][Stage 1:==>                                                   (13 + 112) / 343][Stage 1:==>                                                   (16 + 112) / 343][Stage 1:==>                                                   (18 + 112) / 343][Stage 1:==>                                                   (19 + 112) / 343][Stage 1:=====>                                                (33 + 112) / 343][Stage 1:===========>                                          (73 + 112) / 343][Stage 1:===============>                                     (103 + 112) / 343][Stage 1:====================>                                (130 + 112) / 343][Stage 1:=====================>                               (139 + 112) / 343][Stage 1:=======================>                             (154 + 112) / 343][Stage 1:===========================>                         (177 + 112) / 343][Stage 1:==============================>                      (197 + 112) / 343][Stage 1:=================================>                   (217 + 112) / 343][Stage 1:======================================>               (245 + 98) / 343][Stage 1:============================================>         (283 + 60) / 343][Stage 1:================================================>     (311 + 32) / 343][Stage 1:==================================================>   (322 + 21) / 343][Stage 1:====================================================> (333 + 10) / 343][Stage 1:======================================================>(337 + 6) / 343][Stage 1:======================================================>(340 + 3) / 343][Stage 1:======================================================>(341 + 2) / 343][Stage 1:======================================================>(342 + 1) / 343]                                                                                [Stage 2:==>                                                   (16 + 112) / 344][Stage 2:=====>                                                (35 + 112) / 344][Stage 2:========>                                             (56 + 112) / 344][Stage 2:==========>                                           (66 + 112) / 344][Stage 2:=============>                                        (88 + 112) / 344][Stage 2:================>                                    (110 + 112) / 344][Stage 2:====================>                                (131 + 112) / 344][Stage 2:======================>                              (148 + 112) / 344][Stage 2:========================>                            (162 + 112) / 344][Stage 2:============================>                        (184 + 112) / 344][Stage 2:================================>                    (208 + 112) / 344][Stage 2:====================================>                (240 + 104) / 344][Stage 2:===========================================>          (274 + 70) / 344][Stage 2:===============================================>      (303 + 41) / 344][Stage 2:==================================================>   (323 + 21) / 344][Stage 2:===================================================>  (329 + 15) / 344][Stage 2:=====================================================> (337 + 7) / 344][Stage 2:======================================================>(339 + 5) / 344][Stage 2:======================================================>(340 + 4) / 344][Stage 2:======================================================>(341 + 3) / 344][Stage 2:======================================================>(342 + 2) / 344][Stage 2:======================================================>(343 + 1) / 344]                                                                                Time elapsed: 18.30579172 seconds
+res1: Int = 0
+
+scala> 
+
+scala> for (query <- queries){
+     | println(s">> Running query: ${query._1}")
+     | show_timing{sqlContext.sql(query._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, i ndex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+     | }
+>> Running query: SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=1 and imageLevel = 0 and imageId = '1.svs'
+[Stage 3:=>                                                     (7 + 112) / 343][Stage 3:===>                                                  (22 + 112) / 343][Stage 3:======>                                               (42 + 112) / 343][Stage 3:==========>                                           (65 + 112) / 343][Stage 3:=============>                                        (88 + 112) / 343][Stage 3:================>                                    (107 + 112) / 343][Stage 3:===================>                                 (129 + 112) / 343][Stage 3:=======================>                             (152 + 112) / 343][Stage 3:===========================>                         (175 + 112) / 343][Stage 3:==============================>                      (198 + 112) / 343][Stage 3:===================================>                 (227 + 112) / 343][Stage 3:========================================>             (258 + 85) / 343][Stage 3:============================================>         (285 + 58) / 343][Stage 3:================================================>     (308 + 35) / 343][Stage 3:===================================================>  (325 + 18) / 343][Stage 3:====================================================> (332 + 11) / 343][Stage 3:======================================================>(337 + 6) / 343][Stage 3:======================================================>(340 + 3) / 343][Stage 3:======================================================>(341 + 2) / 343][Stage 3:======================================================>(342 + 1) / 343]                                                                                [Stage 4:====>                                                 (31 + 112) / 344][Stage 4:========>                                             (54 + 112) / 344][Stage 4:============>                                         (81 + 112) / 344][Stage 4:===============>                                      (98 + 112) / 344][Stage 4:==================>                                  (117 + 112) / 344][Stage 4:====================>                                (136 + 112) / 344][Stage 4:========================>                            (156 + 112) / 344][Stage 4:===========================>                         (180 + 112) / 344][Stage 4:================================>                    (212 + 112) / 344][Stage 4:=======================================>              (251 + 93) / 344][Stage 4:============================================>         (286 + 58) / 344][Stage 4:===============================================>      (304 + 40) / 344][Stage 4:==================================================>   (319 + 25) / 344][Stage 4:===================================================>  (329 + 15) / 344][Stage 4:=====================================================> (336 + 8) / 344][Stage 4:======================================================>(340 + 4) / 344][Stage 4:======================================================>(341 + 3) / 344][Stage 4:======================================================>(343 + 1) / 344]                                                                                Time elapsed: 10.976996939 seconds
+>> Running query: SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=2 and imageLevel = 0 and imageId = '1.svs'
+[Stage 5:===>                                                  (21 + 112) / 343][Stage 5:=======>                                              (48 + 112) / 343][Stage 5:==========>                                           (68 + 112) / 343][Stage 5:=============>                                        (87 + 112) / 343][Stage 5:================>                                    (108 + 113) / 343][Stage 5:====================>                                (131 + 112) / 343][Stage 5:========================>                            (158 + 112) / 343][Stage 5:============================>                        (184 + 112) / 343][Stage 5:===============================>                     (206 + 112) / 343][Stage 5:=======================================>              (250 + 93) / 343][Stage 5:============================================>         (285 + 58) / 343][Stage 5:=================================================>    (317 + 26) / 343][Stage 5:===================================================>  (328 + 15) / 343][Stage 5:=====================================================> (334 + 9) / 343][Stage 5:======================================================>(337 + 6) / 343][Stage 5:======================================================>(338 + 5) / 343][Stage 5:======================================================>(339 + 4) / 343][Stage 5:======================================================>(341 + 2) / 343]                                                                                [Stage 6:=======>                                              (47 + 112) / 344][Stage 6:==========>                                           (68 + 112) / 344][Stage 6:===============>                                      (98 + 112) / 344][Stage 6:==================>                                  (118 + 112) / 344][Stage 6:=====================>                               (137 + 112) / 344][Stage 6:=========================>                           (168 + 112) / 344][Stage 6:============================>                        (186 + 112) / 344][Stage 6:=================================>                   (220 + 113) / 344][Stage 6:========================================>             (256 + 88) / 344][Stage 6:=============================================>        (288 + 56) / 344][Stage 6:================================================>     (308 + 36) / 344][Stage 6:==================================================>   (319 + 25) / 344][Stage 6:===================================================>  (331 + 13) / 344][Stage 6:=====================================================> (336 + 8) / 344][Stage 6:======================================================>(340 + 4) / 344][Stage 6:======================================================>(341 + 3) / 344][Stage 6:======================================================>(342 + 2) / 344][Stage 6:======================================================>(343 + 1) / 344]                                                                                Time elapsed: 10.845196314 seconds
+>> Running query: SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=4 and imageLevel = 0 and imageId = '1.svs'
+[Stage 7:====>                                                 (28 + 112) / 343][Stage 7:========>                                             (53 + 112) / 343][Stage 7:============>                                         (78 + 112) / 343][Stage 7:===============>                                     (101 + 112) / 343][Stage 7:==================>                                  (121 + 112) / 343][Stage 7:======================>                              (144 + 112) / 343][Stage 7:==========================>                          (174 + 112) / 343][Stage 7:==============================>                      (196 + 112) / 343][Stage 7:===================================>                 (227 + 112) / 343][Stage 7:=========================================>            (263 + 80) / 343][Stage 7:==============================================>       (295 + 48) / 343][Stage 7:=================================================>    (315 + 28) / 343][Stage 7:===================================================>  (327 + 16) / 343][Stage 7:=====================================================> (335 + 8) / 343][Stage 7:======================================================>(338 + 5) / 343][Stage 7:======================================================>(340 + 3) / 343][Stage 7:======================================================>(342 + 1) / 343]                                                                                [Stage 8:=======>                                              (45 + 112) / 344][Stage 8:==========>                                           (65 + 112) / 344][Stage 8:=============>                                        (85 + 112) / 344][Stage 8:==================>                                  (117 + 112) / 344][Stage 8:=====================>                               (138 + 112) / 344][Stage 8:========================>                            (159 + 112) / 344][Stage 8:=============================>                       (189 + 112) / 344][Stage 8:==================================>                  (221 + 112) / 344][Stage 8:=======================================>              (252 + 92) / 344][Stage 8:==========================================>           (273 + 71) / 344][Stage 8:=============================================>        (291 + 53) / 344][Stage 8:================================================>     (310 + 34) / 344][Stage 8:==================================================>   (324 + 20) / 344][Stage 8:===================================================>  (329 + 15) / 344][Stage 8:======================================================>(338 + 6) / 344][Stage 8:======================================================>(340 + 4) / 344][Stage 8:======================================================>(341 + 3) / 344][Stage 8:======================================================>(342 + 2) / 344][Stage 8:======================================================>(343 + 1) / 344]                                                                                Time elapsed: 10.554286402 seconds
+>> Running query: SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=8 and imageLevel = 0 and imageId = '1.svs'
+[Stage 9:====>                                                 (28 + 112) / 343][Stage 9:========>                                             (51 + 112) / 343][Stage 9:===========>                                          (70 + 112) / 343][Stage 9:=============>                                        (83 + 112) / 343][Stage 9:================>                                    (105 + 112) / 343][Stage 9:====================>                                (131 + 112) / 343][Stage 9:=======================>                             (154 + 112) / 343][Stage 9:===========================>                         (177 + 112) / 343][Stage 9:===============================>                     (202 + 112) / 343][Stage 9:=====================================>               (243 + 100) / 343][Stage 9:==========================================>           (273 + 70) / 343][Stage 9:==============================================>       (298 + 45) / 343][Stage 9:=================================================>    (313 + 30) / 343][Stage 9:==================================================>   (322 + 21) / 343][Stage 9:=====================================================> (334 + 9) / 343][Stage 9:======================================================>(339 + 4) / 343][Stage 9:======================================================>(341 + 2) / 343][Stage 9:======================================================>(342 + 1) / 343]                                                                                [Stage 10:======>                                              (42 + 112) / 344][Stage 10:========>                                            (58 + 112) / 344][Stage 10:============>                                        (81 + 112) / 344][Stage 10:================>                                   (106 + 112) / 344][Stage 10:===================>                                (130 + 112) / 344][Stage 10:======================>                             (152 + 112) / 344][Stage 10:==========================>                         (173 + 112) / 344][Stage 10:==============================>                     (199 + 113) / 344][Stage 10:==================================>                 (230 + 113) / 344][Stage 10:=========================================>           (272 + 72) / 344][Stage 10:=============================================>       (294 + 50) / 344][Stage 10:===============================================>     (310 + 34) / 344][Stage 10:==================================================>  (329 + 15) / 344][Stage 10:====================================================> (335 + 9) / 344][Stage 10:====================================================> (337 + 7) / 344][Stage 10:=====================================================>(340 + 4) / 344][Stage 10:=====================================================>(341 + 3) / 344][Stage 10:=====================================================>(343 + 1) / 344]                                                                                Time elapsed: 11.826431194 seconds
+
+scala> 
+
+scala> 
+
+scala> :quit
+17/04/24 11:10:28 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+39.0 G  /nidan/parquet/Slides-uncompressed-256-ZINDEX.prqt

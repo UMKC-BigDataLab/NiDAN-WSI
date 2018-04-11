@@ -1,0 +1,135 @@
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+17/04/27 00:52:25 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/04/27 00:52:39 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/04/27 00:52:39 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/04/27 00:52:39 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+17/04/27 00:52:42 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/04/27 00:52:52 WARN metastore.ObjectStore: Failed to get database global_temp, returning NoSuchObjectException
+Spark context Web UI available at http://128.110.152.45:4040
+Spark context available as 'sc' (master = spark://ctl:7077, app id = app-20170427005241-0119).
+Spark session available as 'spark'.
+Welcome to
+      ____              __
+     / __/__  ___ _____/ /__
+    _\ \/ _ \/ _ `/ __/  '_/
+   /___/ .__/\_,_/_/ /_/\_\   version 2.1.0
+      /_/
+         
+Using Scala version 2.11.8 (OpenJDK 64-Bit Server VM, Java 1.8.0_121)
+Type in expressions to have them evaluated.
+Type :help for more information.
+
+scala> //spark-shell --master spark://ctl:7077 --driver-memory 28G  --executor-memory 28G  --executor-core s 8  --num-executors 16  --conf spark.io.compression.codec=lzf  --conf spark.akka.frameSize=1024  --conf s park.driver.maxResultSize=2g
+
+scala> 
+
+scala> 
+
+scala> import java.io.File
+import java.io.File
+
+scala> import java.io.FileOutputStream
+import java.io.FileOutputStream
+
+scala> 
+
+scala> val queryMsg = "#QUERY "
+queryMsg: String = "#QUERY "
+
+scala> val loadDBMsg = "#LOAD_DB "
+loadDBMsg: String = "#LOAD_DB "
+
+scala> val loadTable = "#LOAD_TABLE "
+loadTable: String = "#LOAD_TABLE "
+
+scala> val loadSqlContext = "#LOAD_SQL_CONTEXT "
+loadSqlContext: String = "#LOAD_SQL_CONTEXT "
+
+scala> val dataSource = "/nidan/parquet/slide3.prqt"
+dataSource: String = /nidan/parquet/slide3.prqt
+
+scala> 
+
+scala> def show_timing[T](proc: => T): T = {
+     |     val start=System.nanoTime()
+     |     val res = proc
+     |     val end = System.nanoTime()
+     |     println("Time elapsed: " + (end-start)/1000000000.0 + " seconds")
+     |     res
+     | }
+show_timing: [T](proc: => T)T
+
+scala> 
+
+scala> val writeToLocal = (in:(Array[Byte], Long, String)) =>{
+     |     val bytes = in._1
+     |     val output = in._3
+     |     
+     |     val writer = new FileOutputStream(output)
+     |     writer.write(bytes)
+     |     writer.close
+     |   }
+writeToLocal: ((Array[Byte], Long, String)) => Unit = <function1>
+
+scala> 
+
+scala> val queries = List(
+     | ("SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=1 and imageLevel = 0  and imageId = '1.svs'",1),
+     | ("SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=2 and imageLevel = 0  and imageId = '1.svs'",2),
+     | ("SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=4 and imageLevel = 0  and imageId = '1.svs'",4),
+     | ("SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=8 and imageLevel = 0  and imageId = '1.svs'",8)
+     | )
+queries: List[(String, Int)] = List((SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=1 and imageLevel = 0 and imageId = '1.svs',1), (SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=2 and imageLevel = 0 and imageId = '1.svs',2), (SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=4 and imageLevel = 0 and imageId = '1.svs',4), (SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=8 and imageLevel = 0 and imageId = '1.svs',8))
+
+scala> 
+
+scala> 
+
+scala> val sqlContext = show_timing{new org.apache.spark.sql.SQLContext(sc)}
+warning: there was one deprecation warning; re-run with -deprecation for details
+Time elapsed: 0.001379503 seconds
+sqlContext: org.apache.spark.sql.SQLContext = org.apache.spark.sql.SQLContext@664217a8
+
+scala> val pf = show_timing{sqlContext.read.parquet(dataSource)}
+Time elapsed: 6.652117561 seconds
+pf: org.apache.spark.sql.DataFrame = [imageId: string, imageLevel: int ... 8 more fields]
+
+scala> show_timing{pf.createOrReplaceTempView("data")}
+Time elapsed: 0.748105801 seconds
+
+scala> 
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (b ytes, index) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 1:>                                                      (0 + 112) / 120][Stage 1:==>                                                    (5 + 112) / 120][Stage 1:====>                                                  (9 + 111) / 120][Stage 1:====>                                                 (11 + 109) / 120][Stage 1:======>                                               (14 + 106) / 120][Stage 1:======>                                               (15 + 105) / 120][Stage 1:==============================>                        (66 + 54) / 120][Stage 1:============================================>          (98 + 22) / 120][Stage 1:=====================================================> (117 + 3) / 120][Stage 1:======================================================>(118 + 2) / 120][Stage 1:======================================================>(119 + 1) / 120]                                                                                [Stage 2:===>                                                   (8 + 112) / 121][Stage 2:====================>                                  (44 + 77) / 121][Stage 2:========================================>              (89 + 32) / 121][Stage 2:=============================================>        (102 + 19) / 121][Stage 2:==================================================>    (112 + 9) / 121][Stage 2:====================================================>  (115 + 6) / 121][Stage 2:=====================================================> (118 + 3) / 121][Stage 2:======================================================>(119 + 2) / 121][Stage 2:======================================================>(120 + 1) / 121]                                                                                Time elapsed: 11.956252679 seconds
+res1: Int = 0
+
+scala> 
+
+scala> for (query <- queries){
+     | println(s">> Running query: ${query._1}")
+     | show_timing{sqlContext.sql(query._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes,  index) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+     | }
+>> Running query: SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=1 and imageLevel = 0 and imageId = '1.svs'
+[Stage 3:=======>                                              (17 + 103) / 120][Stage 3:==============================>                        (66 + 54) / 120][Stage 3:=====================================>                 (81 + 39) / 120][Stage 3:============================================>          (97 + 23) / 120][Stage 3:================================================>     (107 + 13) / 120][Stage 3:====================================================>  (114 + 6) / 120][Stage 3:=====================================================> (117 + 3) / 120][Stage 3:======================================================>(118 + 2) / 120][Stage 3:======================================================>(119 + 1) / 120]                                                                                [Stage 4:=================>                                     (39 + 82) / 121][Stage 4:=======================================>               (87 + 34) / 121][Stage 4:=============================================>         (99 + 22) / 121][Stage 4:==============================================>       (105 + 16) / 121][Stage 4:===================================================>   (113 + 8) / 121][Stage 4:=====================================================> (117 + 4) / 121][Stage 4:=====================================================> (118 + 3) / 121][Stage 4:======================================================>(119 + 2) / 121][Stage 4:======================================================>(120 + 1) / 121]                                                                                Time elapsed: 7.92393117 seconds
+>> Running query: SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=2 and imageLevel = 0 and imageId = '1.svs'
+[Stage 5:===========>                                           (26 + 94) / 120][Stage 5:====================================>                  (80 + 40) / 120][Stage 5:============================================>          (97 + 23) / 120][Stage 5:==================================================>    (111 + 9) / 120][Stage 5:=====================================================> (117 + 3) / 120][Stage 5:======================================================>(118 + 2) / 120][Stage 5:======================================================>(119 + 1) / 120]                                                                                [Stage 6:=================>                                     (39 + 82) / 121][Stage 6:=====================================>                 (83 + 38) / 121][Stage 6:===========================================>           (95 + 26) / 121][Stage 6:================================================>     (108 + 13) / 121][Stage 6:=================================================>    (111 + 10) / 121][Stage 6:====================================================>  (116 + 5) / 121][Stage 6:======================================================>(119 + 2) / 121][Stage 6:======================================================>(120 + 1) / 121]                                                                                Time elapsed: 7.835814061 seconds
+>> Running query: SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=4 and imageLevel = 0 and imageId = '1.svs'
+[Stage 7:==>                                                    (5 + 113) / 120][Stage 7:======================>                                (49 + 71) / 120][Stage 7:=======================================>               (87 + 33) / 120][Stage 7:============================================>          (97 + 23) / 120][Stage 7:==============================================>       (103 + 17) / 120][Stage 7:================================================>     (107 + 13) / 120][Stage 7:=====================================================> (116 + 4) / 120][Stage 7:======================================================>(118 + 2) / 120][Stage 7:======================================================>(119 + 1) / 120]                                                                                [Stage 8:==================================>                    (75 + 46) / 121][Stage 8:===========================================>           (95 + 26) / 121][Stage 8:=============================================>        (102 + 19) / 121][Stage 8:================================================>     (109 + 12) / 121][Stage 8:=====================================================> (117 + 4) / 121][Stage 8:=====================================================> (118 + 3) / 121][Stage 8:======================================================>(119 + 2) / 121][Stage 8:======================================================>(120 + 1) / 121]                                                                                Time elapsed: 7.819791205 seconds
+>> Running query: SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=8 and imageLevel = 0 and imageId = '1.svs'
+[Stage 9:=>                                                     (3 + 112) / 120][Stage 9:=================>                                     (38 + 82) / 120][Stage 9:======================================>                (83 + 37) / 120][Stage 9:==========================================>            (92 + 28) / 120][Stage 9:=============================================>        (102 + 18) / 120][Stage 9:=================================================>    (109 + 11) / 120][Stage 9:=====================================================> (117 + 3) / 120][Stage 9:======================================================>(118 + 2) / 120][Stage 9:======================================================>(119 + 1) / 120]                                                                                [Stage 10:===========================>                          (61 + 60) / 121][Stage 10:=========================================>            (94 + 27) / 121][Stage 10:=============================================>       (103 + 18) / 121][Stage 10:===============================================>     (109 + 12) / 121][Stage 10:==================================================>   (114 + 7) / 121][Stage 10:===================================================>  (116 + 5) / 121][Stage 10:====================================================> (117 + 4) / 121][Stage 10:=====================================================>(119 + 2) / 121][Stage 10:=====================================================>(120 + 1) / 121]                                                                                Time elapsed: 7.823781347 seconds
+
+scala> 
+
+scala> 
+
+scala> :quit
+17/04/27 00:54:00 WARN netty.Dispatcher: Message RemoteProcessDisconnected(128.110.152.41:59646) dropped. Could not find BlockManagerMaster.
+17/04/27 00:54:00 WARN netty.Dispatcher: Message RemoteProcessDisconnected(128.110.152.25:34094) dropped. RpcEnv already stopped.
+17/04/27 00:54:00 WARN netty.Dispatcher: Message RemoteProcessDisconnected(128.110.152.25:34094) dropped. RpcEnv already stopped.
+17/04/27 00:54:02 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+11.2 G  /nidan/parquet/slide1.prqt
+14.9 G  /nidan/parquet/slide2.prqt
+12.8 G  /nidan/parquet/slide3.prqt

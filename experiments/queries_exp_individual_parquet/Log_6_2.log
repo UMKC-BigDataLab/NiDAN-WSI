@@ -1,0 +1,123 @@
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+17/04/27 12:23:29 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/04/27 12:23:44 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/04/27 12:23:44 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/04/27 12:23:45 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+17/04/27 12:23:47 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/04/27 12:24:01 WARN metastore.ObjectStore: Failed to get database global_temp, returning NoSuchObjectException
+Spark context Web UI available at http://128.110.152.45:4040
+Spark context available as 'sc' (master = spark://ctl:7077, app id = app-20170427122347-0173).
+Spark session available as 'spark'.
+Welcome to
+      ____              __
+     / __/__  ___ _____/ /__
+    _\ \/ _ \/ _ `/ __/  '_/
+   /___/ .__/\_,_/_/ /_/\_\   version 2.1.0
+      /_/
+         
+Using Scala version 2.11.8 (OpenJDK 64-Bit Server VM, Java 1.8.0_121)
+Type in expressions to have them evaluated.
+Type :help for more information.
+
+scala> //spark-shell --master spark://ctl:7077 --driver-memory 28G  --executor-memory 28G  --executor-core s 8  --num-executors 16  --conf spark.io.compression.codec=lzf  --conf spark.akka.frameSize=1024  --conf s park.driver.maxResultSize=2g
+
+scala> 
+
+scala> 
+
+scala> import java.io.File
+import java.io.File
+
+scala> import java.io.FileOutputStream
+import java.io.FileOutputStream
+
+scala> 
+
+scala> val queryMsg = "#QUERY "
+queryMsg: String = "#QUERY "
+
+scala> val loadDBMsg = "#LOAD_DB "
+loadDBMsg: String = "#LOAD_DB "
+
+scala> val loadTable = "#LOAD_TABLE "
+loadTable: String = "#LOAD_TABLE "
+
+scala> val loadSqlContext = "#LOAD_SQL_CONTEXT "
+loadSqlContext: String = "#LOAD_SQL_CONTEXT "
+
+scala> val dataSource = "/nidan/parquet/slide6.prqt"
+dataSource: String = /nidan/parquet/slide6.prqt
+
+scala> 
+
+scala> def show_timing[T](proc: => T): T = {
+     |     val start=System.nanoTime()
+     |     val res = proc
+     |     val end = System.nanoTime()
+     |     println("Time elapsed: " + (end-start)/1000000000.0 + " seconds")
+     |     res
+     | }
+show_timing: [T](proc: => T)T
+
+scala> 
+
+scala> val writeToLocal = (in:(Array[Byte], Long, String)) =>{
+     |     val bytes = in._1
+     |     val output = in._3
+     |     
+     |     val writer = new FileOutputStream(output)
+     |     writer.write(bytes)
+     |     writer.close
+     |   }
+writeToLocal: ((Array[Byte], Long, String)) => Unit = <function1>
+
+scala> 
+
+scala> val queries = List(
+     | ("SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=1 and imageLevel = 0  and imageId = '6.svs'",1),
+     | ("SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=2 and imageLevel = 0  and imageId = '6.svs'",2),
+     | ("SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=4 and imageLevel = 0  and imageId = '6.svs'",4),
+     | ("SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=8 and imageLevel = 0  and imageId = '6.svs'",8)
+     | )
+queries: List[(String, Int)] = List((SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=1 and imageLevel = 0 and imageId = '6.svs',1), (SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=2 and imageLevel = 0 and imageId = '6.svs',2), (SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=4 and imageLevel = 0 and imageId = '6.svs',4), (SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=8 and imageLevel = 0 and imageId = '6.svs',8))
+
+scala> 
+
+scala> 
+
+scala> val sqlContext = show_timing{new org.apache.spark.sql.SQLContext(sc)}
+warning: there was one deprecation warning; re-run with -deprecation for details
+Time elapsed: 0.001402606 seconds
+sqlContext: org.apache.spark.sql.SQLContext = org.apache.spark.sql.SQLContext@664217a8
+
+scala> val pf = show_timing{sqlContext.read.parquet(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 9.481128038 seconds
+pf: Unit = ()
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (b ytes, index) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 1:>                                                      (0 + 104) / 109][Stage 1:===>                                                   (6 + 103) / 109][Stage 1:===>                                                   (7 + 102) / 109][Stage 1:====>                                                  (9 + 100) / 109][Stage 1:=====>                                                 (10 + 99) / 109][Stage 1:=====>                                                 (11 + 98) / 109][Stage 1:======>                                                (12 + 97) / 109][Stage 1:=========>                                             (19 + 90) / 109][Stage 1:====================>                                  (40 + 69) / 109][Stage 1:=======================================>               (78 + 31) / 109][Stage 1:=====================================================> (106 + 3) / 109][Stage 1:======================================================>(108 + 1) / 109]                                                                                [Stage 2:>                                                      (0 + 104) / 110][Stage 2:=>                                                     (2 + 104) / 110][Stage 2:=>                                                     (3 + 104) / 110][Stage 2:========>                                              (16 + 94) / 110][Stage 2:=====================>                                 (42 + 68) / 110][Stage 2:================================>                      (64 + 46) / 110][Stage 2:============================================>          (88 + 22) / 110][Stage 2:================================================>      (96 + 14) / 110][Stage 2:====================================================>  (104 + 6) / 110][Stage 2:=====================================================> (106 + 4) / 110][Stage 2:======================================================>(108 + 2) / 110][Stage 2:======================================================>(109 + 1) / 110]                                                                                Time elapsed: 13.920543526 seconds
+res0: Int = 0
+
+scala> 
+
+scala> for (query <- queries){
+     | println(s">> Running query: ${query._1}")
+     | show_timing{sqlContext.sql(query._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes,  index) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+     | }
+>> Running query: SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=1 and imageLevel = 0 and imageId = '6.svs'
+[Stage 3:>                                                      (0 + 104) / 109][Stage 3:=====>                                                 (10 + 99) / 109][Stage 3:================>                                      (33 + 76) / 109][Stage 3:============================>                          (57 + 52) / 109][Stage 3:===================================>                   (71 + 38) / 109][Stage 3:==============================================>        (92 + 17) / 109][Stage 3:==================================================>    (101 + 8) / 109][Stage 3:====================================================>  (105 + 4) / 109][Stage 3:=====================================================> (106 + 3) / 109][Stage 3:======================================================>(108 + 1) / 109]                                                                                [Stage 4:>                                                      (0 + 104) / 110][Stage 4:>                                                      (1 + 104) / 110][Stage 4:==>                                                    (5 + 104) / 110][Stage 4:============>                                          (25 + 85) / 110][Stage 4:=======================>                               (47 + 63) / 110][Stage 4:==================================>                    (68 + 42) / 110][Stage 4:=============================================>         (90 + 20) / 110][Stage 4:================================================>      (96 + 14) / 110][Stage 4:=================================================>     (99 + 11) / 110][Stage 4:====================================================>  (105 + 5) / 110][Stage 4:=====================================================> (106 + 4) / 110][Stage 4:=====================================================> (107 + 3) / 110][Stage 4:======================================================>(109 + 1) / 110]                                                                                Time elapsed: 7.259898524 seconds
+>> Running query: SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=2 and imageLevel = 0 and imageId = '6.svs'
+[Stage 5:>                                                      (0 + 104) / 109][Stage 5:==>                                                    (5 + 104) / 109][Stage 5:============>                                          (24 + 85) / 109][Stage 5:========================>                              (49 + 60) / 109][Stage 5:====================================>                  (72 + 37) / 109][Stage 5:==============================================>        (92 + 17) / 109][Stage 5:================================================>      (97 + 12) / 109][Stage 5:==================================================>    (101 + 8) / 109][Stage 5:====================================================>  (105 + 4) / 109][Stage 5:=====================================================> (106 + 3) / 109][Stage 5:=====================================================> (107 + 2) / 109][Stage 5:======================================================>(108 + 1) / 109]                                                                                [Stage 6:>                                                      (0 + 104) / 110][Stage 6:======>                                                (13 + 97) / 110][Stage 6:=================>                                     (34 + 76) / 110][Stage 6:=============================>                         (58 + 52) / 110][Stage 6:========================================>              (80 + 30) / 110][Stage 6:=============================================>         (90 + 20) / 110][Stage 6:================================================>      (96 + 14) / 110][Stage 6:=================================================>    (100 + 10) / 110][Stage 6:====================================================>  (105 + 5) / 110][Stage 6:=====================================================> (106 + 4) / 110][Stage 6:=====================================================> (107 + 3) / 110][Stage 6:======================================================>(109 + 1) / 110]                                                                                Time elapsed: 7.334358652 seconds
+>> Running query: SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=4 and imageLevel = 0 and imageId = '6.svs'
+[Stage 7:>                                                        (0 + 0) / 109][Stage 7:>                                                      (0 + 104) / 109][Stage 7:=>                                                     (2 + 104) / 109][Stage 7:========>                                              (16 + 93) / 109][Stage 7:=================>                                     (34 + 75) / 109][Stage 7:===============================>                       (63 + 46) / 109][Stage 7:=========================================>             (83 + 26) / 109][Stage 7:=============================================>         (91 + 18) / 109][Stage 7:================================================>      (96 + 13) / 109][Stage 7:====================================================>  (104 + 5) / 109][Stage 7:=====================================================> (107 + 2) / 109][Stage 7:======================================================>(108 + 1) / 109][Stage 7:=======================================================(109 + 0) / 109]                                                                                [Stage 8:>                                                      (0 + 104) / 110][Stage 8:====>                                                  (8 + 102) / 110][Stage 8:================>                                      (33 + 77) / 110][Stage 8:================================>                      (64 + 46) / 110][Stage 8:========================================>              (80 + 30) / 110][Stage 8:=============================================>         (91 + 19) / 110][Stage 8:===============================================>       (95 + 15) / 110][Stage 8:===================================================>   (102 + 8) / 110][Stage 8:=====================================================> (106 + 4) / 110][Stage 8:======================================================>(108 + 2) / 110]                                                                                Time elapsed: 7.391103499 seconds
+>> Running query: SELECT imageBytes from data where partitionZIndex >= 1 and partitionZIndex <=8 and imageLevel = 0 and imageId = '6.svs'
+[Stage 9:>                                                      (0 + 104) / 109][Stage 9:=>                                                     (2 + 104) / 109][Stage 9:=====>                                                 (10 + 99) / 109][Stage 9:==================>                                    (36 + 73) / 109][Stage 9:===============================>                       (63 + 46) / 109][Stage 9:=========================================>             (82 + 27) / 109][Stage 9:===========================================>           (86 + 23) / 109][Stage 9:=============================================>         (91 + 18) / 109][Stage 9:================================================>      (96 + 13) / 109][Stage 9:==================================================>    (101 + 8) / 109][Stage 9:====================================================>  (105 + 4) / 109][Stage 9:=====================================================> (107 + 2) / 109][Stage 9:======================================================>(108 + 1) / 109]                                                                                [Stage 10:==>                                                   (6 + 104) / 110][Stage 10:==========>                                           (21 + 89) / 110][Stage 10:======================>                               (45 + 65) / 110][Stage 10:===============================>                      (64 + 46) / 110][Stage 10:======================================>               (78 + 32) / 110][Stage 10:===========================================>          (89 + 21) / 110][Stage 10:=============================================>        (93 + 17) / 110][Stage 10:===============================================>      (96 + 14) / 110][Stage 10:==================================================>   (102 + 8) / 110][Stage 10:===================================================>  (104 + 6) / 110][Stage 10:===================================================>  (105 + 5) / 110][Stage 10:====================================================> (107 + 3) / 110][Stage 10:=====================================================>(108 + 2) / 110][Stage 10:=====================================================>(109 + 1) / 110]                                                                                Time elapsed: 9.265725496 seconds
+
+scala> 
+
+scala> 
+
+scala> :quit

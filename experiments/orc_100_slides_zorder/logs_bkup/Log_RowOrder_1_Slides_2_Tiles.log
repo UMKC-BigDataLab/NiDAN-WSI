@@ -1,0 +1,2234 @@
+Warning: Ignoring non-spark config property: hive.exec.reducers.bytes.per.reducer=67108864
+Warning: Ignoring non-spark config property: hive.fetch.task.aggr=false
+Warning: Ignoring non-spark config property: hive.merge.sparkfiles=false
+Warning: Ignoring non-spark config property: hive.auto.convert.join.noconditionaltask=true
+Warning: Ignoring non-spark config property: hive.merge.size.per.task=256000000
+Warning: Ignoring non-spark config property: hive.smbjoin.cache.rows=10000
+Warning: Ignoring non-spark config property: hive.merge.smallfiles.avgsize=16000000
+Warning: Ignoring non-spark config property: hive.optimize.sort.dynamic.partition=false
+Warning: Ignoring non-spark config property: hive.exec.orc.default.stripe.size=67108864
+Warning: Ignoring non-spark config property: hive.vectorized.execution.enabled=true
+Warning: Ignoring non-spark config property: hive.optimize.reducededuplication.min.reducer=4
+Warning: Ignoring non-spark config property: hive.orc.splits.include.file.footer=false
+Warning: Ignoring non-spark config property: hive.merge.mapfiles=true
+Warning: Ignoring non-spark config property: mapreduce.input.fileinputformat.list-status.num-threads=5
+Warning: Ignoring non-spark config property: hive.vectorized.groupby.checkinterval=4096
+Warning: Ignoring non-spark config property: hive.compute.query.using.stats=true
+Warning: Ignoring non-spark config property: mapreduce.input.fileinputformat.split.maxsize=750000000
+Warning: Ignoring non-spark config property: hive.merge.orcfile.stripe.level=true
+Warning: Ignoring non-spark config property: hive.auto.convert.join.noconditionaltask.size=894435328
+Warning: Ignoring non-spark config property: hive.fetch.task.conversion.threshold=1073741824
+Warning: Ignoring non-spark config property: hive.auto.convert.join=true
+Warning: Ignoring non-spark config property: hive.optimize.reducededuplication=true
+Warning: Ignoring non-spark config property: hive.vectorized.groupby.flush.percent=0.1
+Warning: Ignoring non-spark config property: hive.fetch.task.conversion=more
+Warning: Ignoring non-spark config property: hive.limit.pushdown.memory.usage=0.4
+Warning: Ignoring non-spark config property: hive.vectorized.execution.reduce.enabled=false
+Warning: Ignoring non-spark config property: hive.map.aggr=true
+Warning: Ignoring non-spark config property: hive.stats.autogather=true
+Warning: Ignoring non-spark config property: hive.stats.fetch.column.stats=true
+Warning: Ignoring non-spark config property: hive.cbo.enable=true
+Warning: Ignoring non-spark config property: hive.map.aggr.hash.percentmemory=0.5
+Warning: Ignoring non-spark config property: hive.optimize.index.filter=true
+Warning: Ignoring non-spark config property: hive.optimize.bucketmapjoin.sortedmerge=false
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+17/05/21 22:47:22 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/05/21 22:47:36 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/05/21 22:47:36 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/05/21 22:47:37 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+17/05/21 22:47:39 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/05/21 22:47:50 WARN metastore.ObjectStore: Failed to get database global_temp, returning NoSuchObjectException
+Spark context Web UI available at http://128.110.152.45:4040
+Spark context available as 'sc' (master = spark://ctl:7077, app id = app-20170521224739-0385).
+Spark session available as 'spark'.
+Welcome to
+      ____              __
+     / __/__  ___ _____/ /__
+    _\ \/ _ \/ _ `/ __/  '_/
+   /___/ .__/\_,_/_/ /_/\_\   version 2.1.0
+      /_/
+         
+Using Scala version 2.11.8 (OpenJDK 64-Bit Server VM, Java 1.8.0_121)
+Type in expressions to have them evaluated.
+Type :help for more information.
+
+scala> import java.io.File
+import java.io.File
+
+scala> import java.io.FileOutputStream
+import java.io.FileOutputStream
+
+scala> import org.apache.spark.sql._
+import org.apache.spark.sql._
+
+scala> 
+
+scala> val queryMsg = "#QUERY "
+queryMsg: String = "#QUERY "
+
+scala> val loadDBMsg = "#LOAD_DB "
+loadDBMsg: String = "#LOAD_DB "
+
+scala> val loadTable = "#LOAD_TABLE "
+loadTable: String = "#LOAD_TABLE "
+
+scala> val loadsqlHive = "#LOAD_SQL_CONTEXT "
+loadsqlHive: String = "#LOAD_SQL_CONTEXT "
+
+scala> 
+
+scala> def show_timing[T](proc: => T): T = {
+     |     val start=System.nanoTime()
+     |     val res = proc
+     |     val end = System.nanoTime()
+     |     println("Time elapsed: " + (end-start)/1000000000.0 + " seconds")
+     |     res
+     | }
+show_timing: [T](proc: => T)T
+
+scala> 
+
+scala> val writeToLocal = (in:(Array[Byte], Long, String)) =>{
+     |     val bytes = in._1
+     |     val output = in._3
+     |     
+     |     val writer = new FileOutputStream(output)
+     |     writer.write(bytes)
+     |     writer.close
+     |     1
+     |   }
+writeToLocal: ((Array[Byte], Long, String)) => Int = <function1>
+
+scala>   
+     | val sqlContext = new org.apache.spark.sql.hive.HiveContext(sc)
+warning: there was one deprecation warning; re-run with -deprecation for details
+sqlContext: org.apache.spark.sql.hive.HiveContext = org.apache.spark.sql.hive.HiveContext@52737c1
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide4"
+dataSource: String = /nidan/orc/individualORC/slide4
+
+scala> 
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 4.421942616 seconds
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE partitionZIndex>=100 AND partitionZIndex<=107", 8))
+queries: List[(String, Int)] = List((SELECT imageBytes FROM data WHERE partitionZIndex>=100 AND partitionZIndex<=107,8))
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 0:>                                                      (0 + 112) / 115][Stage 0:============>                                          (26 + 89) / 115][Stage 0:============================>                          (60 + 55) / 115][Stage 0:==============================>                        (64 + 51) / 115][Stage 0:===============================>                       (65 + 50) / 115][Stage 0:================================>                      (68 + 47) / 115][Stage 0:==================================>                    (72 + 43) / 115][Stage 0:=====================================>                 (78 + 37) / 115][Stage 0:==========================================>            (88 + 27) / 115][Stage 0:==============================================>        (97 + 18) / 115][Stage 0:=================================================>    (105 + 10) / 115][Stage 0:==================================================>    (106 + 9) / 115][Stage 0:====================================================>  (109 + 6) / 115][Stage 0:======================================================>(114 + 1) / 115]                                                                                [Stage 1:=============================>                         (62 + 54) / 116][Stage 1:==============================>                        (64 + 52) / 116][Stage 1:=================================>                     (70 + 46) / 116][Stage 1:===================================>                   (75 + 41) / 116][Stage 1:=====================================>                 (79 + 37) / 116][Stage 1:=========================================>             (87 + 29) / 116][Stage 1:===============================================>      (101 + 15) / 116][Stage 1:====================================================>  (111 + 5) / 116][Stage 1:=====================================================> (112 + 4) / 116][Stage 1:=====================================================> (113 + 3) / 116]                                                                                Time elapsed: 12.723078209 seconds
+res2: Int = 0
+
+scala> 
+
+scala>  
+     | val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 177  OR  partitionIndex = 178 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 177  OR  partitionIndex = 178 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.759280074 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 2:========================>                              (51 + 62) / 113][Stage 2:==========================>                            (54 + 59) / 113][Stage 2:=============================>                         (61 + 52) / 113][Stage 2:==============================>                        (63 + 50) / 113][Stage 2:==================================>                    (71 + 42) / 113][Stage 2:==========================================>            (88 + 25) / 113][Stage 2:===============================================>      (100 + 13) / 113][Stage 2:===================================================>   (106 + 7) / 113][Stage 2:======================================================>(112 + 1) / 113]                                                                                [Stage 3:===========================>                           (57 + 57) / 114][Stage 3:=============================>                         (62 + 52) / 114][Stage 3:==================================>                    (71 + 43) / 114][Stage 3:======================================>                (80 + 34) / 114][Stage 3:==============================================>        (96 + 18) / 114][Stage 3:===================================================>   (106 + 8) / 114][Stage 3:=====================================================> (110 + 4) / 114]                                                                                Time elapsed: 4.735913584 seconds
+res5: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 52  OR  partitionIndex = 60 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 52  OR  partitionIndex = 60 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.672967756 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 4:==========================>                            (55 + 58) / 113][Stage 4:============================>                          (59 + 54) / 113][Stage 4:=============================>                         (60 + 53) / 113][Stage 4:===============================>                       (64 + 49) / 113][Stage 4:========================================>              (84 + 29) / 113][Stage 4:================================================>      (99 + 14) / 113][Stage 4:====================================================>  (107 + 6) / 113][Stage 4:======================================================>(111 + 2) / 113]                                                                                [Stage 5:===========================>                           (57 + 57) / 114][Stage 5:===========================>                           (58 + 56) / 114][Stage 5:==============================>                        (64 + 50) / 114][Stage 5:=====================================>                 (78 + 36) / 114][Stage 5:==============================================>        (97 + 17) / 114][Stage 5:===================================================>   (107 + 7) / 114]                                                                                Time elapsed: 4.116887102 seconds
+res7: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 45  OR  partitionIndex = 59 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 45  OR  partitionIndex = 59 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.658682454 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 6:===========================>                           (56 + 57) / 113][Stage 6:===========================>                           (57 + 56) / 113][Stage 6:=============================>                         (61 + 52) / 113][Stage 6:==================================>                    (71 + 42) / 113][Stage 6:=========================================>             (86 + 27) / 113][Stage 6:===============================================>      (100 + 13) / 113][Stage 6:====================================================>  (108 + 5) / 113]                                                                                [Stage 7:============================>                          (59 + 55) / 114][Stage 7:==============================>                        (63 + 51) / 114][Stage 7:=================================>                     (70 + 44) / 114][Stage 7:===========================================>           (91 + 23) / 114][Stage 7:====================================================>  (108 + 6) / 114][Stage 7:======================================================>(113 + 1) / 114]                                                                                Time elapsed: 4.005869471 seconds
+res9: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 166  OR  partitionIndex = 152 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 166  OR  partitionIndex = 152 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.570790754 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 8:============================>                          (59 + 54) / 113][Stage 8:=============================>                         (60 + 53) / 113][Stage 8:====================================>                  (74 + 39) / 113][Stage 8:==========================================>            (88 + 25) / 113][Stage 8:===============================================>      (100 + 13) / 113][Stage 8:====================================================>  (108 + 5) / 113]                                                                                [Stage 9:============================>                          (60 + 54) / 114][Stage 9:==================================>                    (71 + 43) / 114][Stage 9:=========================================>             (85 + 29) / 114][Stage 9:============================================>          (93 + 21) / 114][Stage 9:===================================================>   (107 + 7) / 114]                                                                                Time elapsed: 3.739105674 seconds
+res11: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 33  OR  partitionIndex = 47 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 33  OR  partitionIndex = 47 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.566420875 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 10:===========================>                          (58 + 55) / 113][Stage 10:============================>                         (60 + 53) / 113][Stage 10:================================>                     (67 + 46) / 113][Stage 10:===========================================>          (90 + 23) / 113][Stage 10:===============================================>      (99 + 14) / 113][Stage 10:===================================================>  (107 + 6) / 113][Stage 10:=====================================================>(111 + 2) / 113]                                                                                [Stage 11:============================>                         (60 + 54) / 114][Stage 11:=================================>                    (70 + 44) / 114][Stage 11:==========================================>           (89 + 25) / 114][Stage 11:==================================================>   (106 + 8) / 114][Stage 11:=====================================================>(113 + 1) / 114]                                                                                Time elapsed: 3.870805965 seconds
+res13: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 173  OR  partitionIndex = 174 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 173  OR  partitionIndex = 174 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.526532806 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 12:===========================>                          (57 + 56) / 113][Stage 12:==============================>                       (64 + 49) / 113][Stage 12:===================================>                  (75 + 38) / 113][Stage 12:===========================================>          (90 + 23) / 113][Stage 12:===============================================>     (101 + 12) / 113][Stage 12:=====================================================>(112 + 1) / 113]                                                                                [Stage 13:===========================>                          (59 + 55) / 114][Stage 13:=============================>                        (63 + 51) / 114][Stage 13:====================================>                 (76 + 38) / 114][Stage 13:==============================================>       (99 + 15) / 114][Stage 13:===================================================>  (108 + 6) / 114][Stage 13:=====================================================>(112 + 2) / 114][Stage 13:=====================================================>(113 + 1) / 114]                                                                                Time elapsed: 3.830420649 seconds
+res15: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 56  OR  partitionIndex = 12 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 56  OR  partitionIndex = 12 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.545887494 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 14:============================>                         (59 + 54) / 113][Stage 14:============================>                         (60 + 53) / 113][Stage 14:=================================>                    (70 + 43) / 113][Stage 14:============================================>         (93 + 20) / 113][Stage 14:=================================================>    (104 + 9) / 113]                                                                                [Stage 15:============================>                         (60 + 54) / 114][Stage 15:===============================>                      (67 + 47) / 114][Stage 15:========================================>             (85 + 29) / 114][Stage 15:===============================================>     (102 + 12) / 114]                                                                                Time elapsed: 3.39693466 seconds
+res17: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 88  OR  partitionIndex = 74 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 88  OR  partitionIndex = 74 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.524398029 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 16:===========================>                          (58 + 55) / 113][Stage 16:=============================>                        (61 + 52) / 113][Stage 16:==================================>                   (73 + 40) / 113][Stage 16:==============================================>       (98 + 15) / 113][Stage 16:===================================================>  (107 + 6) / 113][Stage 16:=====================================================>(112 + 1) / 113]                                                                                [Stage 17:============================>                         (60 + 54) / 114][Stage 17:==============================>                       (65 + 49) / 114][Stage 17:======================================>               (82 + 32) / 114][Stage 17:==============================================>      (100 + 14) / 114][Stage 17:===================================================>  (108 + 6) / 114]                                                                                Time elapsed: 3.648701885 seconds
+res19: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 86  OR  partitionIndex = 98 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 86  OR  partitionIndex = 98 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.566023483 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 18:===========================>                          (58 + 55) / 113][Stage 18:============================>                         (59 + 54) / 113][Stage 18:=============================>                        (62 + 51) / 113][Stage 18:====================================>                 (77 + 36) / 113][Stage 18:===============================================>     (102 + 11) / 113][Stage 18:====================================================> (109 + 4) / 113]                                                                                [Stage 19:============================>                         (60 + 54) / 114][Stage 19:====================================>                 (76 + 38) / 114][Stage 19:============================================>         (94 + 20) / 114][Stage 19:================================================>    (104 + 10) / 114][Stage 19:===================================================>  (109 + 5) / 114][Stage 19:=====================================================>(112 + 2) / 114]                                                                                Time elapsed: 3.831816791 seconds
+res21: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 79  OR  partitionIndex = 80 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 79  OR  partitionIndex = 80 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.601585236 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 20:===========================>                          (58 + 55) / 113][Stage 20:=============================>                        (62 + 51) / 113][Stage 20:===================================>                  (75 + 38) / 113][Stage 20:=========================================>            (87 + 26) / 113][Stage 20:===============================================>     (101 + 12) / 113][Stage 20:====================================================> (110 + 3) / 113]                                                                                [Stage 21:===========================>                          (59 + 55) / 114][Stage 21:=============================>                        (62 + 52) / 114][Stage 21:======================================>               (82 + 32) / 114][Stage 21:================================================>    (104 + 10) / 114][Stage 21:====================================================> (111 + 3) / 114]                                                                                Time elapsed: 3.454744035 seconds
+res23: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 216  OR  partitionIndex = 217 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 216  OR  partitionIndex = 217 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.50881365 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 22:============================>                         (59 + 54) / 113][Stage 22:=============================>                        (61 + 52) / 113][Stage 22:=====================================>                (79 + 34) / 113][Stage 22:=============================================>        (96 + 17) / 113][Stage 22:===================================================>  (107 + 6) / 113][Stage 22:=====================================================>(112 + 1) / 113]                                                                                [Stage 23:===========================>                          (59 + 55) / 114][Stage 23:==============================>                       (64 + 50) / 114][Stage 23:====================================>                 (78 + 36) / 114][Stage 23:=============================================>        (97 + 17) / 114][Stage 23:=====================================================>(112 + 2) / 114]                                                                                Time elapsed: 3.348555515 seconds
+res25: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 57  OR  partitionIndex = 58 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 57  OR  partitionIndex = 58 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.497861929 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 24:===========================>                          (58 + 55) / 113][Stage 24:=================================>                    (70 + 43) / 113][Stage 24:============================================>         (93 + 20) / 113][Stage 24:===================================================>  (107 + 6) / 113]                                                                                [Stage 25:=============================>                        (62 + 52) / 114][Stage 25:=================================>                    (70 + 44) / 114][Stage 25:=======================================>              (84 + 30) / 114][Stage 25:===============================================>     (102 + 12) / 114][Stage 25:=====================================================>(113 + 1) / 114]                                                                                Time elapsed: 3.223298907 seconds
+res27: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 60  OR  partitionIndex = 61 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 60  OR  partitionIndex = 61 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.509752654 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 26:===========================>                          (58 + 55) / 113][Stage 26:=============================>                        (61 + 52) / 113][Stage 26:===================================>                  (75 + 38) / 113][Stage 26:=============================================>        (95 + 18) / 113][Stage 26:====================================================> (110 + 3) / 113]                                                                                [Stage 27:===========================>                          (59 + 55) / 114][Stage 27:=============================>                        (62 + 52) / 114][Stage 27:=======================================>              (84 + 30) / 114][Stage 27:=============================================>        (97 + 17) / 114][Stage 27:=====================================================>(112 + 2) / 114]                                                                                Time elapsed: 3.211829215 seconds
+res29: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 40  OR  partitionIndex = 41 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 40  OR  partitionIndex = 41 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.470503743 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 28:============================>                         (59 + 54) / 113][Stage 28:=================================>                    (70 + 43) / 113][Stage 28:===========================================>          (91 + 22) / 113][Stage 28:=================================================>    (104 + 9) / 113][Stage 28:=====================================================>(111 + 2) / 113]                                                                                [Stage 29:============================>                         (61 + 53) / 114][Stage 29:================================>                     (69 + 45) / 114][Stage 29:=========================================>            (88 + 26) / 114][Stage 29:===================================================>  (108 + 6) / 114][Stage 29:====================================================> (110 + 4) / 114]                                                                                Time elapsed: 3.582551039 seconds
+res31: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 179  OR  partitionIndex = 180 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 179  OR  partitionIndex = 180 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.495503493 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 30:===========================>                          (58 + 55) / 113][Stage 30:============================>                         (60 + 53) / 113][Stage 30:=================================>                    (70 + 43) / 113][Stage 30:============================================>         (93 + 20) / 113][Stage 30:===================================================>  (107 + 6) / 113]                                                                                [Stage 31:===========================>                          (59 + 55) / 114][Stage 31:=============================>                        (62 + 52) / 114][Stage 31:======================================>               (82 + 32) / 114][Stage 31:==============================================>      (100 + 14) / 114][Stage 31:====================================================> (111 + 3) / 114]                                                                                Time elapsed: 3.132381072 seconds
+res33: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 84  OR  partitionIndex = 70 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 84  OR  partitionIndex = 70 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.479248669 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 32:===========================>                          (57 + 56) / 113][Stage 32:============================>                         (59 + 54) / 113][Stage 32:================================>                     (68 + 45) / 113][Stage 32:========================================>             (85 + 28) / 113][Stage 32:===================================================>  (108 + 5) / 113]                                                                                [Stage 33:============================>                         (61 + 53) / 114][Stage 33:================================>                     (68 + 46) / 114][Stage 33:=============================================>        (95 + 19) / 114][Stage 33:=====================================================>(113 + 1) / 114]                                                                                Time elapsed: 3.041441052 seconds
+res35: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 62  OR  partitionIndex = 63 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 62  OR  partitionIndex = 63 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.490243894 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 34:============================>                         (59 + 54) / 113][Stage 34:===============================>                      (65 + 48) / 113][Stage 34:======================================>               (80 + 33) / 113][Stage 34:===============================================>     (101 + 12) / 113][Stage 34:==================================================>   (105 + 8) / 113][Stage 34:===================================================>  (108 + 5) / 113][Stage 34:=====================================================>(111 + 2) / 113]                                                                                [Stage 35:===========================>                          (59 + 55) / 114][Stage 35:=============================>                        (62 + 52) / 114][Stage 35:==================================>                   (73 + 41) / 114][Stage 35:==============================================>      (100 + 14) / 114][Stage 35:===================================================>  (109 + 5) / 114]                                                                                Time elapsed: 3.639900192 seconds
+res37: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 180  OR  partitionIndex = 181 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 180  OR  partitionIndex = 181 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.513138664 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 36:===========================>                          (58 + 55) / 113][Stage 36:===============================>                      (65 + 48) / 113][Stage 36:===========================================>          (91 + 22) / 113][Stage 36:==================================================>   (106 + 7) / 113][Stage 36:=====================================================>(111 + 2) / 113]                                                                                [Stage 37:============================>                         (61 + 53) / 114][Stage 37:====================================>                 (78 + 36) / 114][Stage 37:==========================================>           (90 + 24) / 114][Stage 37:====================================================> (111 + 3) / 114]                                                                                Time elapsed: 3.362856896 seconds
+res39: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 213  OR  partitionIndex = 227 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 213  OR  partitionIndex = 227 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.487564837 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 38:===========================>                          (58 + 55) / 113][Stage 38:==============================>                       (63 + 50) / 113][Stage 38:========================================>             (84 + 29) / 113][Stage 38:================================================>    (103 + 10) / 113][Stage 38:=====================================================>(111 + 2) / 113]                                                                                [Stage 39:=============================>                        (63 + 51) / 114][Stage 39:===================================>                  (74 + 40) / 114][Stage 39:=============================================>        (95 + 19) / 114][Stage 39:==================================================>   (107 + 7) / 114]                                                                                Time elapsed: 3.411830242 seconds
+res41: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 77  OR  partitionIndex = 78 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 77  OR  partitionIndex = 78 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.485296358 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 40:===========================>                          (58 + 55) / 113][Stage 40:================================>                     (67 + 46) / 113][Stage 40:==============================================>       (98 + 15) / 113][Stage 40:===================================================>  (108 + 5) / 113][Stage 40:=====================================================>(111 + 2) / 113]                                                                                [Stage 41:=============================>                        (62 + 52) / 114][Stage 41:==================================>                   (73 + 41) / 114][Stage 41:=============================================>        (96 + 18) / 114][Stage 41:===================================================>  (109 + 5) / 114][Stage 41:=====================================================>(112 + 2) / 114]                                                                                Time elapsed: 3.439126603 seconds
+res43: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 128  OR  partitionIndex = 129 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 128  OR  partitionIndex = 129 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.482129898 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 42:============================>                         (59 + 54) / 113][Stage 42:================================>                     (67 + 46) / 113][Stage 42:========================================>             (85 + 28) / 113][Stage 42:================================================>    (103 + 10) / 113]                                                                                [Stage 43:============================>                         (61 + 53) / 114][Stage 43:===================================>                  (74 + 40) / 114][Stage 43:===========================================>          (92 + 22) / 114][Stage 43:===================================================>  (108 + 6) / 114][Stage 43:=====================================================>(112 + 2) / 114]                                                                                Time elapsed: 3.233950186 seconds
+res45: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 120  OR  partitionIndex = 121 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 120  OR  partitionIndex = 121 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.444203527 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 44:============================>                         (59 + 54) / 113][Stage 44:================================>                     (67 + 46) / 113][Stage 44:==========================================>           (89 + 24) / 113][Stage 44:===================================================>  (107 + 6) / 113]                                                                                [Stage 45:============================>                         (61 + 53) / 114][Stage 45:=================================>                    (70 + 44) / 114][Stage 45:=========================================>            (88 + 26) / 114][Stage 45:==================================================>   (107 + 7) / 114]                                                                                Time elapsed: 3.051349135 seconds
+res47: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 17  OR  partitionIndex = 18 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 17  OR  partitionIndex = 18 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.475708179 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 46:============================>                         (59 + 54) / 113][Stage 46:===============================>                      (66 + 47) / 113][Stage 46:=====================================>                (78 + 35) / 113][Stage 46:==============================================>      (100 + 13) / 113][Stage 46:====================================================> (110 + 3) / 113]                                                                                [Stage 47:============================>                         (60 + 54) / 114][Stage 47:===================================>                  (74 + 40) / 114][Stage 47:============================================>         (94 + 20) / 114][Stage 47:====================================================> (110 + 4) / 114][Stage 47:=====================================================>(112 + 2) / 114]                                                                                Time elapsed: 3.328538097 seconds
+res49: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 210  OR  partitionIndex = 211 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 210  OR  partitionIndex = 211 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.450574652 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 48:===========================>                          (58 + 55) / 113][Stage 48:=============================>                        (62 + 51) / 113][Stage 48:======================================>               (81 + 32) / 113][Stage 48:===============================================>     (101 + 12) / 113][Stage 48:===================================================>  (108 + 5) / 113][Stage 48:=====================================================>(112 + 1) / 113]                                                                                [Stage 49:===========================>                          (59 + 55) / 114][Stage 49:=============================>                        (63 + 51) / 114][Stage 49:====================================>                 (77 + 37) / 114][Stage 49:==============================================>      (101 + 13) / 114][Stage 49:=====================================================>(112 + 2) / 114]                                                                                Time elapsed: 3.415530937 seconds
+res51: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 87  OR  partitionIndex = 88 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 87  OR  partitionIndex = 88 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.427237425 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 50:============================>                         (59 + 54) / 113][Stage 50:=============================>                        (62 + 51) / 113][Stage 50:===================================>                  (74 + 39) / 113][Stage 50:==============================================>       (98 + 15) / 113]                                                                                [Stage 51:============================>                         (60 + 54) / 114][Stage 51:================================>                     (69 + 45) / 114][Stage 51:=======================================>              (83 + 31) / 114][Stage 51:=================================================>    (105 + 9) / 114][Stage 51:=====================================================>(112 + 2) / 114]                                                                                Time elapsed: 3.094852478 seconds
+res53: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 195  OR  partitionIndex = 209 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 195  OR  partitionIndex = 209 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.43569691 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 52:============================>                         (59 + 54) / 113][Stage 52:=============================>                        (61 + 52) / 113][Stage 52:========================================>             (84 + 29) / 113][Stage 52:==================================================>   (105 + 8) / 113][Stage 52:====================================================> (110 + 3) / 113][Stage 52:=====================================================>(112 + 1) / 113]                                                                                [Stage 53:============================>                         (60 + 54) / 114][Stage 53:==============================>                       (64 + 50) / 114][Stage 53:======================================>               (81 + 33) / 114][Stage 53:==============================================>       (99 + 15) / 114][Stage 53:====================================================> (110 + 4) / 114][Stage 53:=====================================================>(113 + 1) / 114]                                                                                Time elapsed: 3.556282407 seconds
+res55: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 186  OR  partitionIndex = 187 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 186  OR  partitionIndex = 187 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.438399052 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 54:===========================>                          (58 + 55) / 113][Stage 54:=============================>                        (62 + 51) / 113][Stage 54:=====================================>                (79 + 34) / 113][Stage 54:=============================================>        (95 + 18) / 113][Stage 54:====================================================> (109 + 4) / 113]                                                                                [Stage 55:============================>                         (60 + 54) / 114][Stage 55:=================================>                    (71 + 43) / 114][Stage 55:===========================================>          (91 + 23) / 114][Stage 55:====================================================> (110 + 4) / 114][Stage 55:=====================================================>(113 + 1) / 114]                                                                                Time elapsed: 3.33295892 seconds
+res57: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 115  OR  partitionIndex = 116 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 115  OR  partitionIndex = 116 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.42745549 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 56:===========================>                          (58 + 55) / 113][Stage 56:==============================>                       (63 + 50) / 113][Stage 56:=====================================>                (78 + 35) / 113][Stage 56:============================================>         (93 + 20) / 113][Stage 56:====================================================> (109 + 4) / 113]                                                                                [Stage 57:============================>                         (60 + 54) / 114][Stage 57:======================================>               (81 + 33) / 114][Stage 57:=================================================>    (105 + 9) / 114][Stage 57:====================================================> (111 + 3) / 114][Stage 57:=====================================================>(113 + 1) / 114]                                                                                Time elapsed: 3.680671493 seconds
+res59: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 156  OR  partitionIndex = 157 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 156  OR  partitionIndex = 157 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.441237276 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 58:===========================>                          (58 + 55) / 113][Stage 58:=============================>                        (62 + 51) / 113][Stage 58:====================================>                 (76 + 37) / 113][Stage 58:==============================================>      (100 + 13) / 113]                                                                                [Stage 59:============================>                         (60 + 54) / 114][Stage 59:================================>                     (69 + 45) / 114][Stage 59:========================================>             (86 + 28) / 114][Stage 59:===============================================>     (102 + 12) / 114][Stage 59:=====================================================>(112 + 2) / 114]                                                                                Time elapsed: 3.111906564 seconds
+res61: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 114  OR  partitionIndex = 100 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 114  OR  partitionIndex = 100 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.440396117 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 60:============================>                         (59 + 54) / 113][Stage 60:=============================>                        (62 + 51) / 113][Stage 60:=================================>                    (71 + 42) / 113][Stage 60:==============================================>      (100 + 13) / 113][Stage 60:====================================================> (110 + 3) / 113]                                                                                [Stage 61:===========================>                          (59 + 55) / 114][Stage 61:==============================>                       (64 + 50) / 114][Stage 61:==========================================>           (89 + 25) / 114][Stage 61:===================================================>  (108 + 6) / 114]                                                                                Time elapsed: 3.147188785 seconds
+res63: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 183  OR  partitionIndex = 197 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 183  OR  partitionIndex = 197 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.428893854 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 62:============================>                         (59 + 54) / 113][Stage 62:=============================>                        (62 + 51) / 113][Stage 62:========================================>             (84 + 29) / 113][Stage 62:===================================================>  (107 + 6) / 113][Stage 62:=====================================================>(112 + 1) / 113]                                                                                [Stage 63:============================>                         (60 + 54) / 114][Stage 63:=============================>                        (63 + 51) / 114][Stage 63:====================================>                 (77 + 37) / 114][Stage 63:===============================================>     (102 + 12) / 114][Stage 63:====================================================> (111 + 3) / 114]                                                                                Time elapsed: 3.199796353 seconds
+res65: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 3  OR  partitionIndex = 17 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 3  OR  partitionIndex = 17 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.44424606 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 64:============================>                         (59 + 54) / 113][Stage 64:================================>                     (67 + 46) / 113][Stage 64:========================================>             (84 + 29) / 113][Stage 64:===============================================>     (101 + 12) / 113]                                                                                [Stage 65:============================>                         (60 + 54) / 114][Stage 65:==============================>                       (65 + 49) / 114][Stage 65:=====================================>                (80 + 34) / 114][Stage 65:===================================================>  (109 + 5) / 114][Stage 65:=====================================================>(112 + 2) / 114]                                                                                Time elapsed: 3.268586508 seconds
+res67: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 106  OR  partitionIndex = 92 ", 2)) 
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 106  OR  partitionIndex = 92 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.439642181 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 66:============================>                         (59 + 54) / 113][Stage 66:===============================>                      (66 + 47) / 113][Stage 66:==========================================>           (89 + 24) / 113][Stage 66:=====================================================>(111 + 2) / 113][Stage 66:=====================================================>(112 + 1) / 113]                                                                                [Stage 67:============================>                         (60 + 54) / 114][Stage 67:==============================>                       (64 + 50) / 114][Stage 67:===================================>                  (75 + 39) / 114][Stage 67:==============================================>       (98 + 16) / 114][Stage 67:=====================================================>(112 + 2) / 114]                                                                                Time elapsed: 3.162115838 seconds
+res69: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 113  OR  partitionIndex = 114 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 113  OR  partitionIndex = 114 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.417895754 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 68:===========================>                          (58 + 55) / 113][Stage 68:=================================>                    (70 + 43) / 113][Stage 68:==========================================>           (89 + 24) / 113][Stage 68:==================================================>   (106 + 7) / 113][Stage 68:====================================================> (110 + 3) / 113]                                                                                [Stage 69:=============================>                        (62 + 52) / 114][Stage 69:====================================>                 (77 + 37) / 114][Stage 69:==============================================>      (101 + 13) / 114][Stage 69:====================================================> (110 + 4) / 114]                                                                                Time elapsed: 3.176475433 seconds
+res71: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 93  OR  partitionIndex = 107 ", 2)) 
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 93  OR  partitionIndex = 107 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.435016042 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 70:===========================>                          (58 + 55) / 113][Stage 70:=============================>                        (62 + 51) / 113][Stage 70:=====================================>                (79 + 34) / 113][Stage 70:=================================================>    (104 + 9) / 113]                                                                                [Stage 71:============================>                         (60 + 54) / 114][Stage 71:=================================>                    (70 + 44) / 114][Stage 71:=============================================>        (96 + 18) / 114][Stage 71:====================================================> (111 + 3) / 114]                                                                                Time elapsed: 3.056219858 seconds
+res73: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 161  OR  partitionIndex = 175 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 161  OR  partitionIndex = 175 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.424490918 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 72:===========================>                          (58 + 55) / 113][Stage 72:============================>                         (59 + 54) / 113][Stage 72:=================================>                    (70 + 43) / 113][Stage 72:===========================================>          (92 + 21) / 113][Stage 72:===================================================>  (107 + 6) / 113]                                                                                [Stage 73:============================>                         (60 + 54) / 114][Stage 73:==================================>                   (72 + 42) / 114][Stage 73:=============================================>        (95 + 19) / 114][Stage 73:====================================================> (111 + 3) / 114]                                                                                Time elapsed: 3.14651074 seconds
+res75: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 18  OR  partitionIndex = 30 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 18  OR  partitionIndex = 30 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.409097814 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 74:============================>                         (59 + 54) / 113][Stage 74:=================================>                    (70 + 43) / 113][Stage 74:=========================================>            (86 + 27) / 113][Stage 74:===============================================>     (102 + 11) / 113][Stage 74:=====================================================>(112 + 1) / 113]                                                                                [Stage 75:=============================>                        (62 + 52) / 114][Stage 75:=================================>                    (71 + 43) / 114][Stage 75:==========================================>           (89 + 25) / 114][Stage 75:==================================================>   (107 + 7) / 114][Stage 75:=====================================================>(113 + 1) / 114]                                                                                Time elapsed: 3.302349408 seconds
+res77: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 181  OR  partitionIndex = 195 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 181  OR  partitionIndex = 195 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.42311298 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 76:===========================>                          (58 + 55) / 113][Stage 76:=============================>                        (61 + 52) / 113][Stage 76:====================================>                 (77 + 36) / 113][Stage 76:================================================>    (103 + 10) / 113]                                                                                [Stage 77:============================>                         (60 + 54) / 114][Stage 77:================================>                     (68 + 46) / 114][Stage 77:===================================>                  (74 + 40) / 114][Stage 77:================================================>    (104 + 10) / 114][Stage 77:=====================================================>(113 + 1) / 114]                                                                                Time elapsed: 2.988359798 seconds
+res79: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 153  OR  partitionIndex = 167 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 153  OR  partitionIndex = 167 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.423455482 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 78:===========================>                          (58 + 55) / 113][Stage 78:=============================>                        (62 + 51) / 113][Stage 78:====================================>                 (77 + 36) / 113][Stage 78:================================================>    (103 + 10) / 113]                                                                                [Stage 79:===========================>                          (59 + 55) / 114][Stage 79:=================================>                    (70 + 44) / 114][Stage 79:==========================================>           (89 + 25) / 114][Stage 79:==================================================>   (107 + 7) / 114][Stage 79:=====================================================>(113 + 1) / 114]                                                                                Time elapsed: 3.116581016 seconds
+res81: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 90  OR  partitionIndex = 91 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 90  OR  partitionIndex = 91 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.408080757 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 80:=============================>                        (61 + 52) / 113][Stage 80:==================================>                   (72 + 41) / 113][Stage 80:=============================================>        (96 + 17) / 113][Stage 80:====================================================> (109 + 4) / 113]                                                                                [Stage 81:============================>                         (60 + 54) / 114][Stage 81:=================================>                    (71 + 43) / 114][Stage 81:===========================================>          (91 + 23) / 114][Stage 81:=================================================>    (105 + 9) / 114]                                                                                Time elapsed: 3.108822382 seconds
+res83: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 206  OR  partitionIndex = 218 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 206  OR  partitionIndex = 218 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.414821021 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 82:===========================>                          (58 + 55) / 113][Stage 82:===============================>                      (66 + 47) / 113][Stage 82:=========================================>            (86 + 27) / 113][Stage 82:===================================================>  (107 + 6) / 113]                                                                                [Stage 83:============================>                         (61 + 53) / 114][Stage 83:==================================>                   (73 + 41) / 114][Stage 83:===========================================>          (91 + 23) / 114][Stage 83:=====================================================>(112 + 2) / 114]                                                                                Time elapsed: 2.909987294 seconds
+res85: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 131  OR  partitionIndex = 145 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 131  OR  partitionIndex = 145 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.418623064 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 84:=============================>                        (61 + 52) / 113][Stage 84:===================================>                  (74 + 39) / 113][Stage 84:============================================>         (94 + 19) / 113][Stage 84:===================================================>  (108 + 5) / 113]                                                                                [Stage 85:===========================>                          (59 + 55) / 114][Stage 85:==============================>                       (64 + 50) / 114][Stage 85:=====================================>                (79 + 35) / 114][Stage 85:===============================================>     (103 + 11) / 114][Stage 85:====================================================> (111 + 3) / 114]                                                                                Time elapsed: 3.063269682 seconds
+res87: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 191  OR  partitionIndex = 205 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 191  OR  partitionIndex = 205 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.40802992 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 86:>                                                       (0 + 0) / 113][Stage 86:===========================>                          (58 + 55) / 113][Stage 86:==============================>                       (63 + 50) / 113][Stage 86:====================================>                 (77 + 36) / 113][Stage 86:==============================================>       (98 + 15) / 113][Stage 86:=====================================================>(112 + 1) / 113]                                                                                [Stage 87:============================>                         (60 + 54) / 114][Stage 87:=============================>                        (62 + 52) / 114][Stage 87:======================================>               (82 + 32) / 114][Stage 87:================================================>    (104 + 10) / 114]                                                                                Time elapsed: 3.132064917 seconds
+res89: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 75  OR  partitionIndex = 76 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 75  OR  partitionIndex = 76 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.408705702 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 88:===========================>                          (58 + 55) / 113][Stage 88:================================>                     (68 + 45) / 113][Stage 88:==========================================>           (88 + 25) / 113][Stage 88:====================================================> (109 + 4) / 113][Stage 88:=====================================================>(112 + 1) / 113]                                                                                [Stage 89:===========================>                          (59 + 55) / 114][Stage 89:==============================>                       (64 + 50) / 114][Stage 89:=========================================>            (87 + 27) / 114][Stage 89:===================================================>  (108 + 6) / 114]                                                                                Time elapsed: 3.058406737 seconds
+res91: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 172  OR  partitionIndex = 180 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 172  OR  partitionIndex = 180 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.410778064 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 90:===========================>                          (58 + 55) / 113][Stage 90:==============================>                       (63 + 50) / 113][Stage 90:======================================>               (80 + 33) / 113][Stage 90:==============================================>       (98 + 15) / 113][Stage 90:=====================================================>(111 + 2) / 113]                                                                                [Stage 91:=============================>                        (63 + 51) / 114][Stage 91:=====================================>                (80 + 34) / 114][Stage 91:==============================================>      (100 + 14) / 114][Stage 91:=====================================================>(113 + 1) / 114]                                                                                Time elapsed: 3.133543596 seconds
+res93: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 169  OR  partitionIndex = 170 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 169  OR  partitionIndex = 170 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.409399505 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 92:===========================>                          (58 + 55) / 113][Stage 92:==============================>                       (63 + 50) / 113][Stage 92:==================================>                   (73 + 40) / 113][Stage 92:=============================================>        (96 + 17) / 113][Stage 92:===================================================>  (107 + 6) / 113][Stage 92:=====================================================>(112 + 1) / 113]                                                                                [Stage 93:============================>                         (60 + 54) / 114][Stage 93:===============================>                      (67 + 47) / 114][Stage 93:======================================>               (81 + 33) / 114][Stage 93:=================================================>    (105 + 9) / 114][Stage 93:=====================================================>(113 + 1) / 114]                                                                                Time elapsed: 3.225866022 seconds
+res95: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 214  OR  partitionIndex = 215 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 214  OR  partitionIndex = 215 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.521584632 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 94:============================>                         (60 + 53) / 113][Stage 94:==================================>                   (72 + 41) / 113][Stage 94:===========================================>          (90 + 23) / 113][Stage 94:===============================================>     (101 + 12) / 113][Stage 94:=====================================================>(111 + 2) / 113]                                                                                [Stage 95:============================>                         (60 + 54) / 114][Stage 95:================================>                     (69 + 45) / 114][Stage 95:===========================================>          (91 + 23) / 114][Stage 95:=================================================>    (105 + 9) / 114]                                                                                Time elapsed: 3.217483208 seconds
+res97: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 38  OR  partitionIndex = 39 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 38  OR  partitionIndex = 39 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.41710709 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 96:============================>                         (59 + 54) / 113][Stage 96:================================>                     (69 + 44) / 113][Stage 96:===========================================>          (90 + 23) / 113][Stage 96:===============================================>     (101 + 12) / 113][Stage 96:=====================================================>(111 + 2) / 113]                                                                                [Stage 97:============================>                         (61 + 53) / 114][Stage 97:=================================>                    (70 + 44) / 114][Stage 97:=======================================>              (84 + 30) / 114][Stage 97:================================================>    (104 + 10) / 114][Stage 97:====================================================> (111 + 3) / 114]                                                                                Time elapsed: 3.382301845 seconds
+res99: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 49  OR  partitionIndex = 50 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 49  OR  partitionIndex = 50 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.403873966 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 98:===========================>                          (58 + 55) / 113][Stage 98:==============================>                       (64 + 49) / 113][Stage 98:=====================================>                (79 + 34) / 113][Stage 98:==============================================>       (98 + 15) / 113][Stage 98:====================================================> (109 + 4) / 113]                                                                                [Stage 99:=============================>                        (63 + 51) / 114][Stage 99:====================================>                 (76 + 38) / 114][Stage 99:===========================================>          (92 + 22) / 114][Stage 99:====================================================> (110 + 4) / 114]                                                                                Time elapsed: 3.139184814 seconds
+res101: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 220  OR  partitionIndex = 221 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 220  OR  partitionIndex = 221 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.407823649 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 100:============================>                        (60 + 53) / 113][Stage 100:==================================>                  (73 + 40) / 113][Stage 100:==========================================>          (90 + 23) / 113][Stage 100:==================================================>  (108 + 5) / 113][Stage 100:====================================================>(112 + 1) / 113]                                                                                [Stage 101:===========================>                         (60 + 54) / 114][Stage 101:==============================>                      (66 + 48) / 114][Stage 101:=======================================>             (85 + 29) / 114][Stage 101:==============================================>      (99 + 15) / 114][Stage 101:====================================================>(112 + 2) / 114]                                                                                Time elapsed: 3.117998875 seconds
+res103: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 30  OR  partitionIndex = 42 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 30  OR  partitionIndex = 42 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.403676788 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 102:===========================>                         (58 + 55) / 113][Stage 102:============================>                        (60 + 53) / 113][Stage 102:===================================>                 (76 + 37) / 113][Stage 102:=============================================>       (97 + 16) / 113][Stage 102:====================================================>(111 + 2) / 113]                                                                                [Stage 103:===========================>                         (60 + 54) / 114][Stage 103:==============================>                      (65 + 49) / 114][Stage 103:=====================================>               (81 + 33) / 114][Stage 103:=============================================>      (100 + 14) / 114][Stage 103:====================================================>(113 + 1) / 114]                                                                                Time elapsed: 3.058276919 seconds
+res105: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 192  OR  partitionIndex = 193 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 192  OR  partitionIndex = 193 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.384916342 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 104:===========================>                         (58 + 55) / 113][Stage 104:=============================>                       (62 + 51) / 113][Stage 104:=====================================>               (79 + 34) / 113][Stage 104:=============================================>       (98 + 15) / 113][Stage 104:==================================================>  (108 + 5) / 113]                                                                                [Stage 105:===========================>                         (60 + 54) / 114][Stage 105:=============================>                       (64 + 50) / 114][Stage 105:======================================>              (83 + 31) / 114][Stage 105:=================================================>   (106 + 8) / 114]                                                                                Time elapsed: 3.126251956 seconds
+res107: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 227  OR  partitionIndex = 228 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 227  OR  partitionIndex = 228 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.408955593 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 106:============================>                        (60 + 53) / 113][Stage 106:================================>                    (70 + 43) / 113][Stage 106:=========================================>           (88 + 25) / 113][Stage 106:==================================================>  (108 + 5) / 113]                                                                                [Stage 107:=============================>                       (63 + 51) / 114][Stage 107:==================================>                  (74 + 40) / 114][Stage 107:=============================================>       (97 + 17) / 114][Stage 107:====================================================>(113 + 1) / 114]                                                                                Time elapsed: 3.011770316 seconds
+res109: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 126  OR  partitionIndex = 127 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 126  OR  partitionIndex = 127 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.397516349 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 108:===========================>                         (58 + 55) / 113][Stage 108:============================>                        (60 + 53) / 113][Stage 108:=====================================>               (79 + 34) / 113][Stage 108:=============================================>       (96 + 17) / 113][Stage 108:====================================================>(111 + 2) / 113]                                                                                [Stage 109:=============================>                       (63 + 51) / 114][Stage 109:====================================>                (78 + 36) / 114][Stage 109:============================================>        (96 + 18) / 114][Stage 109:====================================================>(113 + 1) / 114]                                                                                Time elapsed: 3.0504564 seconds
+res111: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 144  OR  partitionIndex = 130 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 144  OR  partitionIndex = 130 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.488346789 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 110:===========================>                         (59 + 54) / 113][Stage 110:=================================>                   (71 + 42) / 113][Stage 110:===========================================>         (93 + 20) / 113][Stage 110:===================================================> (109 + 4) / 113][Stage 110:====================================================>(112 + 1) / 113]                                                                                [Stage 111:===========================>                         (60 + 54) / 114][Stage 111:================================>                    (70 + 44) / 114][Stage 111:==========================================>          (91 + 23) / 114][Stage 111:===================================================> (110 + 4) / 114]                                                                                Time elapsed: 3.301261737 seconds
+res113: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 218  OR  partitionIndex = 219 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 218  OR  partitionIndex = 219 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.384338006 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 112:============================>                        (60 + 53) / 113][Stage 112:=================================>                   (71 + 42) / 113][Stage 112:========================================>            (86 + 27) / 113][Stage 112:=================================================>   (105 + 8) / 113][Stage 112:====================================================>(112 + 1) / 113]                                                                                [Stage 113:===========================>                         (60 + 54) / 114][Stage 113:================================>                    (70 + 44) / 114][Stage 113:=======================================>             (84 + 30) / 114][Stage 113:===============================================>    (104 + 10) / 114]                                                                                Time elapsed: 2.983808229 seconds
+res115: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 53  OR  partitionIndex = 54 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 53  OR  partitionIndex = 54 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.380845225 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 114:===========================>                         (59 + 54) / 113][Stage 114:============================>                        (61 + 52) / 113][Stage 114:=====================================>               (80 + 33) / 113][Stage 114:==============================================>     (102 + 11) / 113][Stage 114:====================================================>(111 + 2) / 113]                                                                                [Stage 115:===========================>                         (59 + 55) / 114][Stage 115:=============================>                       (64 + 50) / 114][Stage 115:===================================>                 (76 + 38) / 114][Stage 115:==============================================>     (101 + 13) / 114][Stage 115:===================================================> (110 + 4) / 114][Stage 115:====================================================>(112 + 2) / 114]                                                                                Time elapsed: 3.42655131 seconds
+res117: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 204  OR  partitionIndex = 190 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 204  OR  partitionIndex = 190 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.395650272 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 116:===========================>                         (58 + 55) / 113][Stage 116:===============================>                     (67 + 46) / 113][Stage 116:=========================================>           (88 + 25) / 113][Stage 116:==================================================>  (107 + 6) / 113][Stage 116:====================================================>(112 + 1) / 113]                                                                                [Stage 117:===========================>                         (59 + 55) / 114][Stage 117:=============================>                       (64 + 50) / 114][Stage 117:===================================>                 (77 + 37) / 114][Stage 117:============================================>        (96 + 18) / 114][Stage 117:====================================================>(113 + 1) / 114]                                                                                Time elapsed: 3.156591561 seconds
+res119: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 96  OR  partitionIndex = 97 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 96  OR  partitionIndex = 97 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.404947698 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 118:===========================>                         (59 + 54) / 113][Stage 118:==============================>                      (66 + 47) / 113][Stage 118:========================================>            (86 + 27) / 113][Stage 118:==================================================>  (108 + 5) / 113]                                                                                [Stage 119:==============================>                      (65 + 49) / 114][Stage 119:===================================>                 (76 + 38) / 114][Stage 119:============================================>        (96 + 18) / 114][Stage 119:===================================================> (110 + 4) / 114][Stage 119:====================================================>(113 + 1) / 114]                                                                                Time elapsed: 3.044496801 seconds
+res121: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 142  OR  partitionIndex = 154 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 142  OR  partitionIndex = 154 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.397365916 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 120:============================>                        (60 + 53) / 113][Stage 120:==================================>                  (73 + 40) / 113][Stage 120:===========================================>         (93 + 20) / 113][Stage 120:===================================================> (109 + 4) / 113][Stage 120:====================================================>(112 + 1) / 113]                                                                                [Stage 121:===========================>                         (59 + 55) / 114][Stage 121:=============================>                       (64 + 50) / 114][Stage 121:=====================================>               (80 + 34) / 114][Stage 121:==============================================>     (103 + 11) / 114][Stage 121:====================================================>(113 + 1) / 114]                                                                                Time elapsed: 3.178204108 seconds
+res123: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 99  OR  partitionIndex = 113 ", 2)) 
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 99  OR  partitionIndex = 113 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.380410569 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 122:============================>                        (60 + 53) / 113][Stage 122:===============================>                     (67 + 46) / 113][Stage 122:===========================================>         (92 + 21) / 113][Stage 122:===================================================> (109 + 4) / 113]                                                                                [Stage 123:============================>                        (62 + 52) / 114][Stage 123:==================================>                  (74 + 40) / 114][Stage 123:=============================================>       (98 + 16) / 114][Stage 123:===================================================> (111 + 3) / 114]                                                                                Time elapsed: 2.985334211 seconds
+res125: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 137  OR  partitionIndex = 138 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 137  OR  partitionIndex = 138 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.382338891 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 124:===========================>                         (58 + 55) / 113][Stage 124:===========================>                         (59 + 54) / 113][Stage 124:=================================>                   (71 + 42) / 113][Stage 124:==============================================>      (99 + 14) / 113][Stage 124:===================================================> (110 + 3) / 113]                                                                                [Stage 125:============================>                        (62 + 52) / 114][Stage 125:====================================>                (78 + 36) / 114][Stage 125:============================================>        (96 + 18) / 114]                                                                                Time elapsed: 2.907856505 seconds
+res127: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 21  OR  partitionIndex = 22 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 21  OR  partitionIndex = 22 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.39835656 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 126:============================>                        (60 + 53) / 113][Stage 126:==================================>                  (74 + 39) / 113][Stage 126:=========================================>           (89 + 24) / 113][Stage 126:===================================================> (109 + 4) / 113]                                                                                [Stage 127:===========================>                         (59 + 55) / 114][Stage 127:================================>                    (70 + 44) / 114][Stage 127:========================================>            (88 + 26) / 114][Stage 127:=================================================>   (107 + 7) / 114]                                                                                Time elapsed: 3.130535193 seconds
+res129: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 75  OR  partitionIndex = 89 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 75  OR  partitionIndex = 89 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.386106215 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 128:============================>                        (60 + 53) / 113][Stage 128:====================================>                (78 + 35) / 113][Stage 128:==============================================>     (102 + 11) / 113][Stage 128:==================================================>  (108 + 5) / 113]                                                                                [Stage 129:============================>                        (61 + 53) / 114][Stage 129:===============================>                     (68 + 46) / 114][Stage 129:=========================================>           (90 + 24) / 114][Stage 129:==================================================>  (108 + 6) / 114]                                                                                Time elapsed: 3.094475485 seconds
+res131: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 168  OR  partitionIndex = 124 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 168  OR  partitionIndex = 124 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.383546394 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 130:============================>                        (60 + 53) / 113][Stage 130:===================================>                 (75 + 38) / 113][Stage 130:=============================================>       (98 + 15) / 113][Stage 130:====================================================>(111 + 2) / 113]                                                                                [Stage 131:============================>                        (62 + 52) / 114][Stage 131:================================>                    (70 + 44) / 114][Stage 131:=========================================>           (89 + 25) / 114][Stage 131:=================================================>   (106 + 8) / 114]                                                                                Time elapsed: 3.101499217 seconds
+res133: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 63  OR  partitionIndex = 77 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 63  OR  partitionIndex = 77 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.380292835 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 132:===========================>                         (58 + 55) / 113][Stage 132:===============================>                     (67 + 46) / 113][Stage 132:==========================================>          (90 + 23) / 113][Stage 132:==================================================>  (107 + 6) / 113]                                                                                [Stage 133:===========================>                         (59 + 55) / 114][Stage 133:================================>                    (70 + 44) / 114][Stage 133:========================================>            (87 + 27) / 114][Stage 133:==================================================>  (108 + 6) / 114][Stage 133:====================================================>(112 + 2) / 114]                                                                                Time elapsed: 3.101089124 seconds
+res135: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 112  OR  partitionIndex = 8 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 112  OR  partitionIndex = 8 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.384720077 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 134:============================>                        (60 + 53) / 113][Stage 134:===============================>                     (68 + 45) / 113][Stage 134:=======================================>             (84 + 29) / 113][Stage 134:===================================================> (110 + 3) / 113]                                                                                [Stage 135:===========================>                         (60 + 54) / 114][Stage 135:=================================>                   (73 + 41) / 114][Stage 135:========================================>            (88 + 26) / 114][Stage 135:=================================================>   (106 + 8) / 114][Stage 135:====================================================>(113 + 1) / 114]                                                                                Time elapsed: 3.194386396 seconds
+res137: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 146  OR  partitionIndex = 158 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 146  OR  partitionIndex = 158 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.3875896 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 136:===========================>                         (58 + 55) / 113][Stage 136:==================================>                  (73 + 40) / 113][Stage 136:=============================================>       (98 + 15) / 113][Stage 136:==================================================>  (107 + 6) / 113]                                                                                [Stage 137:============================>                        (61 + 53) / 114][Stage 137:================================>                    (69 + 45) / 114][Stage 137:=========================================>           (90 + 24) / 114][Stage 137:==================================================>  (109 + 5) / 114]                                                                                Time elapsed: 3.073014869 seconds
+res139: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 39  OR  partitionIndex = 53 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 39  OR  partitionIndex = 53 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.388506541 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 138:===========================>                         (58 + 55) / 113][Stage 138:=============================>                       (62 + 51) / 113][Stage 138:===================================>                 (76 + 37) / 113][Stage 138:==============================================>     (100 + 13) / 113][Stage 138:====================================================>(112 + 1) / 113]                                                                                [Stage 139:===========================>                         (60 + 54) / 114][Stage 139:==============================>                      (65 + 49) / 114][Stage 139:======================================>              (83 + 31) / 114][Stage 139:=================================================>   (106 + 8) / 114][Stage 139:====================================================>(112 + 2) / 114]                                                                                Time elapsed: 3.023015074 seconds
+res141: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 73  OR  partitionIndex = 87 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 73  OR  partitionIndex = 87 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.387286802 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 140:============================>                        (60 + 53) / 113][Stage 140:=================================>                   (71 + 42) / 113][Stage 140:=========================================>           (88 + 25) / 113][Stage 140:=================================================>   (106 + 7) / 113]                                                                                [Stage 141:===========================>                         (60 + 54) / 114][Stage 141:==============================>                      (66 + 48) / 114][Stage 141:========================================>            (87 + 27) / 114][Stage 141:====================================================>(112 + 2) / 114]                                                                                Time elapsed: 2.928937997 seconds
+res143: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 71  OR  partitionIndex = 85 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 71  OR  partitionIndex = 85 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.379930979 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 142:=============================>                       (63 + 50) / 113][Stage 142:=====================================>               (80 + 33) / 113][Stage 142:=============================================>       (97 + 16) / 113][Stage 142:==================================================>  (107 + 6) / 113]                                                                                [Stage 143:============================>                        (61 + 53) / 114][Stage 143:=====================================>               (80 + 34) / 114][Stage 143:==============================================>      (99 + 15) / 114][Stage 143:===================================================> (111 + 3) / 114]                                                                                Time elapsed: 3.184079086 seconds
+res145: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 68  OR  partitionIndex = 69 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 68  OR  partitionIndex = 69 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.386209023 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 144:===========================>                         (59 + 54) / 113][Stage 144:=================================>                   (72 + 41) / 113][Stage 144:========================================>            (87 + 26) / 113][Stage 144:=================================================>   (105 + 8) / 113]                                                                                [Stage 145:============================>                        (61 + 53) / 114][Stage 145:=================================>                   (72 + 42) / 114][Stage 145:=========================================>           (90 + 24) / 114][Stage 145:=================================================>   (106 + 8) / 114]                                                                                Time elapsed: 3.096314453 seconds
+res147: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 159  OR  partitionIndex = 173 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 159  OR  partitionIndex = 173 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.392728607 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 146:============================>                        (60 + 53) / 113][Stage 146:==============================>                      (65 + 48) / 113][Stage 146:=========================================>           (89 + 24) / 113][Stage 146:===============================================>    (103 + 10) / 113][Stage 146:====================================================>(112 + 1) / 113]                                                                                [Stage 147:===========================>                         (60 + 54) / 114][Stage 147:==============================>                      (66 + 48) / 114][Stage 147:=======================================>             (85 + 29) / 114][Stage 147:===============================================>    (104 + 10) / 114]                                                                                Time elapsed: 3.029604129 seconds
+res149: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 9  OR  partitionIndex = 23 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 9  OR  partitionIndex = 23 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.381068923 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 148:============================>                        (61 + 52) / 113][Stage 148:=================================>                   (71 + 42) / 113][Stage 148:=============================================>       (96 + 17) / 113][Stage 148:====================================================>(111 + 2) / 113]                                                                                [Stage 149:============================>                        (61 + 53) / 114][Stage 149:==================================>                  (75 + 39) / 114][Stage 149:=============================================>      (100 + 14) / 114][Stage 149:===================================================> (110 + 4) / 114]                                                                                Time elapsed: 3.120529241 seconds
+res151: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 135  OR  partitionIndex = 149 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 135  OR  partitionIndex = 149 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.381992404 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 150:===========================>                         (59 + 54) / 113][Stage 150:==============================>                      (64 + 49) / 113][Stage 150:======================================>              (82 + 31) / 113][Stage 150:==============================================>     (102 + 11) / 113]                                                                                [Stage 151:===========================>                         (59 + 55) / 114][Stage 151:================================>                    (69 + 45) / 114][Stage 151:========================================>            (87 + 27) / 114][Stage 151:=================================================>   (106 + 8) / 114][Stage 151:===================================================> (111 + 3) / 114]                                                                                Time elapsed: 3.082892032 seconds
+res153: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 28  OR  partitionIndex = 14 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 28  OR  partitionIndex = 14 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.39299159 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 152:===========================>                         (59 + 54) / 113][Stage 152:==============================>                      (64 + 49) / 113][Stage 152:=====================================>               (79 + 34) / 113][Stage 152:=================================================>   (105 + 8) / 113]                                                                                [Stage 153:============================>                        (61 + 53) / 114][Stage 153:===============================>                     (68 + 46) / 114][Stage 153:=========================================>           (89 + 25) / 114][Stage 153:===============================================>    (104 + 10) / 114][Stage 153:====================================================>(113 + 1) / 114]                                                                                Time elapsed: 3.085094981 seconds
+res155: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 12  OR  partitionIndex = 13 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 12  OR  partitionIndex = 13 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.396736114 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 154:===========================>                         (59 + 54) / 113][Stage 154:=============================>                       (62 + 51) / 113][Stage 154:====================================>                (78 + 35) / 113][Stage 154:=================================================>   (106 + 7) / 113]                                                                                [Stage 155:============================>                        (61 + 53) / 114][Stage 155:=================================>                   (73 + 41) / 114][Stage 155:=========================================>           (90 + 24) / 114][Stage 155:====================================================>(112 + 2) / 114]                                                                                Time elapsed: 2.980039298 seconds
+res157: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 43  OR  partitionIndex = 57 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 43  OR  partitionIndex = 57 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.382289588 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 156:============================>                        (60 + 53) / 113][Stage 156:==================================>                  (74 + 39) / 113][Stage 156:============================================>        (94 + 19) / 113][Stage 156:===================================================> (109 + 4) / 113]                                                                                [Stage 157:============================>                        (62 + 52) / 114][Stage 157:====================================>                (79 + 35) / 114][Stage 157:=============================================>      (100 + 14) / 114][Stage 157:==================================================>  (109 + 5) / 114][Stage 157:====================================================>(113 + 1) / 114]                                                                                Time elapsed: 3.155024832 seconds
+res159: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 135  OR  partitionIndex = 136 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 135  OR  partitionIndex = 136 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.381611848 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 158:============================>                        (60 + 53) / 113][Stage 158:================================>                    (70 + 43) / 113][Stage 158:=============================================>       (97 + 16) / 113][Stage 158:====================================================>(112 + 1) / 113]                                                                                [Stage 159:===========================>                         (59 + 55) / 114][Stage 159:===============================>                     (67 + 47) / 114][Stage 159:=======================================>             (85 + 29) / 114][Stage 159:==============================================>     (102 + 12) / 114][Stage 159:====================================================>(113 + 1) / 114]                                                                                Time elapsed: 2.939682893 seconds
+res161: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 196  OR  partitionIndex = 182 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 196  OR  partitionIndex = 182 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.383833331 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 160:===========================>                         (59 + 54) / 113][Stage 160:===============================>                     (68 + 45) / 113][Stage 160:============================================>        (95 + 18) / 113][Stage 160:==================================================>  (108 + 5) / 113]                                                                                [Stage 161:============================>                        (62 + 52) / 114][Stage 161:==================================>                  (74 + 40) / 114][Stage 161:=============================================>       (97 + 17) / 114][Stage 161:===================================================> (110 + 4) / 114]                                                                                Time elapsed: 3.079965591 seconds
+res163: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 143  OR  partitionIndex = 144 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 143  OR  partitionIndex = 144 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.383810072 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 162:===========================>                         (59 + 54) / 113][Stage 162:================================>                    (69 + 44) / 113][Stage 162:============================================>        (95 + 18) / 113][Stage 162:================================================>    (104 + 9) / 113][Stage 162:===================================================> (109 + 4) / 113]                                                                                [Stage 163:============================>                        (62 + 52) / 114][Stage 163:=================================>                   (72 + 42) / 114][Stage 163:=========================================>           (90 + 24) / 114][Stage 163:==================================================>  (109 + 5) / 114]                                                                                Time elapsed: 3.284956002 seconds
+res165: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 180  OR  partitionIndex = 188 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 180  OR  partitionIndex = 188 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.38037609 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 164:============================>                        (60 + 53) / 113][Stage 164:===================================>                 (75 + 38) / 113][Stage 164:=========================================>           (89 + 24) / 113][Stage 164:==================================================>  (108 + 5) / 113][Stage 164:====================================================>(112 + 1) / 113]                                                                                [Stage 165:===========================>                         (59 + 55) / 114][Stage 165:================================>                    (69 + 45) / 114][Stage 165:=======================================>             (86 + 28) / 114][Stage 165:================================================>    (105 + 9) / 114][Stage 165:====================================================>(113 + 1) / 114]                                                                                Time elapsed: 3.205183831 seconds
+res167: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 95  OR  partitionIndex = 109 ", 2)) 
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 95  OR  partitionIndex = 109 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.509756756 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 166:===========================>                         (58 + 55) / 113][Stage 166:=============================>                       (63 + 50) / 113][Stage 166:======================================>              (83 + 30) / 113][Stage 166:==============================================>     (101 + 12) / 113][Stage 166:====================================================>(112 + 1) / 113]                                                                                [Stage 167:===========================>                         (60 + 54) / 114][Stage 167:=============================>                       (63 + 51) / 114][Stage 167:=====================================>               (80 + 34) / 114][Stage 167:==============================================>     (103 + 11) / 114][Stage 167:====================================================>(113 + 1) / 114]                                                                                Time elapsed: 3.004899898 seconds
+res169: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 36  OR  partitionIndex = 37 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 36  OR  partitionIndex = 37 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.381362393 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 168:===========================>                         (58 + 55) / 113][Stage 168:==============================>                      (66 + 47) / 113][Stage 168:=======================================>             (85 + 28) / 113][Stage 168:===============================================>    (103 + 10) / 113][Stage 168:====================================================>(111 + 2) / 113]                                                                                [Stage 169:===========================>                         (59 + 55) / 114][Stage 169:=============================>                       (64 + 50) / 114][Stage 169:=====================================>               (81 + 33) / 114][Stage 169:==============================================>     (102 + 12) / 114][Stage 169:===================================================> (110 + 4) / 114]                                                                                Time elapsed: 3.275797224 seconds
+res171: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 19  OR  partitionIndex = 20 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 19  OR  partitionIndex = 20 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.384956696 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 170:=============================>                       (63 + 50) / 113][Stage 170:=================================>                   (72 + 41) / 113][Stage 170:=========================================>           (89 + 24) / 113][Stage 170:====================================================>(112 + 1) / 113]                                                                                [Stage 171:===========================>                         (60 + 54) / 114][Stage 171:===============================>                     (68 + 46) / 114][Stage 171:==========================================>          (91 + 23) / 114][Stage 171:==================================================>  (108 + 6) / 114][Stage 171:====================================================>(113 + 1) / 114]                                                                                Time elapsed: 2.985384404 seconds
+res173: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 141  OR  partitionIndex = 142 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 141  OR  partitionIndex = 142 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.382018476 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 172:===========================>                         (59 + 54) / 113][Stage 172:================================>                    (70 + 43) / 113][Stage 172:========================================>            (87 + 26) / 113][Stage 172:=================================================>   (105 + 8) / 113][Stage 172:====================================================>(111 + 2) / 113]                                                                                [Stage 173:===========================>                         (60 + 54) / 114][Stage 173:==================================>                  (75 + 39) / 114][Stage 173:=========================================>           (90 + 24) / 114][Stage 173:==============================================>     (103 + 11) / 114][Stage 173:===================================================> (110 + 4) / 114]                                                                                Time elapsed: 3.38839346 seconds
+res175: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 221  OR  partitionIndex = 235 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 221  OR  partitionIndex = 235 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.380222216 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 174:===========================>                         (59 + 54) / 113][Stage 174:===============================>                     (67 + 46) / 113][Stage 174:========================================>            (86 + 27) / 113][Stage 174:==============================================>     (102 + 11) / 113]                                                                                [Stage 175:============================>                        (62 + 52) / 114][Stage 175:=================================>                   (72 + 42) / 114][Stage 175:===========================================>         (93 + 21) / 114][Stage 175:==================================================>  (109 + 5) / 114]                                                                                Time elapsed: 3.039949149 seconds
+res177: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 20  OR  partitionIndex = 6 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 20  OR  partitionIndex = 6 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.379091896 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 176:===========================>                         (58 + 55) / 113][Stage 176:===========================>                         (59 + 54) / 113][Stage 176:====================================>                (78 + 35) / 113][Stage 176:=============================================>       (98 + 15) / 113][Stage 176:====================================================>(112 + 1) / 113]                                                                                [Stage 177:===========================>                         (59 + 55) / 114][Stage 177:=================================>                   (72 + 42) / 114][Stage 177:=======================================>             (86 + 28) / 114][Stage 177:================================================>    (105 + 9) / 114][Stage 177:====================================================>(112 + 2) / 114]                                                                                Time elapsed: 3.114570675 seconds
+res179: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 69  OR  partitionIndex = 83 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 69  OR  partitionIndex = 83 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.372262433 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 178:===========================>                         (59 + 54) / 113][Stage 178:=============================>                       (63 + 50) / 113][Stage 178:========================================>            (87 + 26) / 113][Stage 178:=================================================>   (105 + 8) / 113][Stage 178:====================================================>(112 + 1) / 113]                                                                                [Stage 179:============================>                        (62 + 52) / 114][Stage 179:==================================>                  (75 + 39) / 114][Stage 179:==============================================>      (99 + 15) / 114][Stage 179:===================================================> (110 + 4) / 114][Stage 179:====================================================>(113 + 1) / 114]                                                                                Time elapsed: 3.273368587 seconds
+res181: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 27  OR  partitionIndex = 28 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 27  OR  partitionIndex = 28 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.381087319 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 180:===========================>                         (59 + 54) / 113][Stage 180:============================>                        (61 + 52) / 113][Stage 180:=====================================>               (80 + 33) / 113][Stage 180:=================================================>   (106 + 7) / 113]                                                                                [Stage 181:============================>                        (61 + 53) / 114][Stage 181:=================================>                   (71 + 43) / 114][Stage 181:=======================================>             (84 + 30) / 114][Stage 181:=================================================>   (106 + 8) / 114][Stage 181:====================================================>(112 + 2) / 114]                                                                                Time elapsed: 3.03559677 seconds
+res183: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 66  OR  partitionIndex = 67 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 66  OR  partitionIndex = 67 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.416186119 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 182:===========================>                         (59 + 54) / 113][Stage 182:==============================>                      (65 + 48) / 113][Stage 182:=======================================>             (84 + 29) / 113][Stage 182:================================================>    (104 + 9) / 113][Stage 182:====================================================>(111 + 2) / 113]                                                                                [Stage 183:===========================>                         (60 + 54) / 114][Stage 183:==============================>                      (65 + 49) / 114][Stage 183:======================================>              (83 + 31) / 114][Stage 183:=================================================>   (106 + 8) / 114]                                                                                Time elapsed: 3.061230992 seconds
+res185: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 167  OR  partitionIndex = 168 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 167  OR  partitionIndex = 168 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.401492832 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 184:===========================>                         (58 + 55) / 113][Stage 184:================================>                    (69 + 44) / 113][Stage 184:========================================>            (86 + 27) / 113][Stage 184:==============================================>     (101 + 12) / 113][Stage 184:===================================================> (110 + 3) / 113]                                                                                [Stage 185:===========================>                         (60 + 54) / 114][Stage 185:=================================>                   (73 + 41) / 114][Stage 185:=============================================>       (98 + 16) / 114][Stage 185:==================================================>  (109 + 5) / 114]                                                                                Time elapsed: 3.248499059 seconds
+res187: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 165  OR  partitionIndex = 179 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 165  OR  partitionIndex = 179 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.378594281 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 186:============================>                        (60 + 53) / 113][Stage 186:================================>                    (70 + 43) / 113][Stage 186:==========================================>          (91 + 22) / 113][Stage 186:==================================================>  (108 + 5) / 113][Stage 186:====================================================>(111 + 2) / 113]                                                                                [Stage 187:===========================>                         (60 + 54) / 114][Stage 187:==================================>                  (75 + 39) / 114][Stage 187:===========================================>         (93 + 21) / 114][Stage 187:==================================================>  (108 + 6) / 114][Stage 187:====================================================>(112 + 2) / 114]                                                                                Time elapsed: 3.354463084 seconds
+res189: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 64  OR  partitionIndex = 65 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 64  OR  partitionIndex = 65 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.381729743 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 188:============================>                        (60 + 53) / 113][Stage 188:===============================>                     (68 + 45) / 113][Stage 188:========================================>            (86 + 27) / 113][Stage 188:=================================================>   (105 + 8) / 113]                                                                                [Stage 189:===========================>                         (60 + 54) / 114][Stage 189:==================================>                  (74 + 40) / 114][Stage 189:==========================================>          (92 + 22) / 114][Stage 189:===================================================> (111 + 3) / 114]                                                                                Time elapsed: 2.884218562 seconds
+res191: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 60  OR  partitionIndex = 68 ", 2))
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 60  OR  partitionIndex = 68 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.383088446 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 190:============================>                        (61 + 52) / 113][Stage 190:==================================>                  (74 + 39) / 113][Stage 190:============================================>        (95 + 18) / 113][Stage 190:===================================================> (110 + 3) / 113]                                                                                [Stage 191:============================>                        (61 + 53) / 114][Stage 191:===============================>                     (68 + 46) / 114][Stage 191:===========================================>         (93 + 21) / 114][Stage 191:=================================================>   (107 + 7) / 114]                                                                                Time elapsed: 3.088996459 seconds
+res193: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 187  OR  partitionIndex = 201 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 187  OR  partitionIndex = 201 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.380384485 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 192:===========================>                         (59 + 54) / 113][Stage 192:=============================>                       (62 + 51) / 113][Stage 192:====================================>                (77 + 36) / 113][Stage 192:==============================================>     (102 + 11) / 113][Stage 192:====================================================>(111 + 2) / 113]                                                                                [Stage 193:============================>                        (61 + 53) / 114][Stage 193:=================================>                   (71 + 43) / 114][Stage 193:==========================================>          (91 + 23) / 114][Stage 193:===================================================> (110 + 4) / 114]                                                                                Time elapsed: 3.144899058 seconds
+res195: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 129  OR  partitionIndex = 143 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 129  OR  partitionIndex = 143 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.385963529 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 194:===========================>                         (58 + 55) / 113][Stage 194:==============================>                      (65 + 48) / 113][Stage 194:=====================================>               (80 + 33) / 113][Stage 194:==================================================>  (108 + 5) / 113][Stage 194:====================================================>(112 + 1) / 113]                                                                                [Stage 195:===========================>                         (59 + 55) / 114][Stage 195:===============================>                     (68 + 46) / 114][Stage 195:=====================================>               (81 + 33) / 114][Stage 195:================================================>    (105 + 9) / 114]                                                                                Time elapsed: 2.854980688 seconds
+res197: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 194  OR  partitionIndex = 195 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 194  OR  partitionIndex = 195 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.389360332 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 196:============================>                        (60 + 53) / 113][Stage 196:===============================>                     (68 + 45) / 113][Stage 196:==========================================>          (91 + 22) / 113][Stage 196:================================================>    (104 + 9) / 113][Stage 196:====================================================>(111 + 2) / 113]                                                                                [Stage 197:===========================>                         (59 + 55) / 114][Stage 197:=============================>                       (63 + 51) / 114][Stage 197:=====================================>               (81 + 33) / 114][Stage 197:==============================================>     (102 + 12) / 114][Stage 197:===================================================> (110 + 4) / 114][Stage 197:====================================================>(113 + 1) / 114]                                                                                Time elapsed: 3.293044854 seconds
+res199: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 105  OR  partitionIndex = 119 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 105  OR  partitionIndex = 119 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.399139818 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 198:===========================>                         (58 + 55) / 113][Stage 198:===============================>                     (67 + 46) / 113][Stage 198:===========================================>         (92 + 21) / 113][Stage 198:=================================================>   (106 + 7) / 113][Stage 198:====================================================>(111 + 2) / 113]                                                                                [Stage 199:===========================>                         (59 + 55) / 114][Stage 199:==============================>                      (65 + 49) / 114][Stage 199:=====================================>               (81 + 33) / 114][Stage 199:==============================================>     (102 + 12) / 114][Stage 199:==================================================>  (109 + 5) / 114]                                                                                Time elapsed: 3.111254784 seconds
+res201: Int = 0
+
+scala> 
+
+scala> val dataSource = "/nidan/orc/individualORC/slide1"
+dataSource: String = /nidan/orc/individualORC/slide1
+
+scala> val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 234  OR  partitionIndex = 220 ", 2) )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 234  OR  partitionIndex = 220 ",2))
+
+scala> 
+
+scala> // query
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 0.395492617 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 200:===========================>                         (59 + 54) / 113][Stage 200:==============================>                      (66 + 47) / 113][Stage 200:=====================================>               (80 + 33) / 113][Stage 200:===============================================>    (103 + 10) / 113]                                                                                [Stage 201:===========================>                         (60 + 54) / 114][Stage 201:===============================>                     (67 + 47) / 114][Stage 201:==========================================>          (92 + 22) / 114][Stage 201:===================================================> (110 + 4) / 114]                                                                                Time elapsed: 2.914523704 seconds
+res203: Int = 0
+
+scala> 
+
+scala> :quit
+17/05/21 22:57:15 WARN netty.Dispatcher: Message RemoteProcessDisconnected(128.110.152.18:56358) dropped. RpcEnv already stopped.
+17/05/21 22:57:15 WARN netty.Dispatcher: Message RemoteProcessDisconnected(128.110.152.18:56358) dropped. RpcEnv already stopped.
+
+real	9m55.730s
+user	11m38.356s
+sys	0m39.704s

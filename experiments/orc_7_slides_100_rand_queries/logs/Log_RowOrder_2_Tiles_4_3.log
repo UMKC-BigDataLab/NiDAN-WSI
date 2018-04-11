@@ -1,0 +1,323 @@
+Warning: Ignoring non-spark config property: hive.exec.reducers.bytes.per.reducer=67108864
+Warning: Ignoring non-spark config property: hive.fetch.task.aggr=false
+Warning: Ignoring non-spark config property: hive.merge.sparkfiles=false
+Warning: Ignoring non-spark config property: hive.auto.convert.join.noconditionaltask=true
+Warning: Ignoring non-spark config property: hive.merge.size.per.task=256000000
+Warning: Ignoring non-spark config property: hive.smbjoin.cache.rows=10000
+Warning: Ignoring non-spark config property: hive.merge.smallfiles.avgsize=16000000
+Warning: Ignoring non-spark config property: hive.optimize.sort.dynamic.partition=false
+Warning: Ignoring non-spark config property: hive.exec.orc.default.stripe.size=67108864
+Warning: Ignoring non-spark config property: hive.vectorized.execution.enabled=true
+Warning: Ignoring non-spark config property: hive.optimize.reducededuplication.min.reducer=4
+Warning: Ignoring non-spark config property: hive.orc.splits.include.file.footer=false
+Warning: Ignoring non-spark config property: hive.merge.mapfiles=true
+Warning: Ignoring non-spark config property: mapreduce.input.fileinputformat.list-status.num-threads=5
+Warning: Ignoring non-spark config property: hive.vectorized.groupby.checkinterval=4096
+Warning: Ignoring non-spark config property: hive.compute.query.using.stats=true
+Warning: Ignoring non-spark config property: mapreduce.input.fileinputformat.split.maxsize=750000000
+Warning: Ignoring non-spark config property: hive.merge.orcfile.stripe.level=true
+Warning: Ignoring non-spark config property: hive.auto.convert.join.noconditionaltask.size=894435328
+Warning: Ignoring non-spark config property: hive.fetch.task.conversion.threshold=1073741824
+Warning: Ignoring non-spark config property: hive.auto.convert.join=true
+Warning: Ignoring non-spark config property: hive.optimize.reducededuplication=true
+Warning: Ignoring non-spark config property: hive.vectorized.groupby.flush.percent=0.1
+Warning: Ignoring non-spark config property: hive.fetch.task.conversion=more
+Warning: Ignoring non-spark config property: hive.limit.pushdown.memory.usage=0.4
+Warning: Ignoring non-spark config property: hive.vectorized.execution.reduce.enabled=false
+Warning: Ignoring non-spark config property: hive.map.aggr=true
+Warning: Ignoring non-spark config property: hive.stats.autogather=true
+Warning: Ignoring non-spark config property: hive.stats.fetch.column.stats=true
+Warning: Ignoring non-spark config property: hive.cbo.enable=true
+Warning: Ignoring non-spark config property: hive.map.aggr.hash.percentmemory=0.5
+Warning: Ignoring non-spark config property: hive.optimize.index.filter=true
+Warning: Ignoring non-spark config property: hive.optimize.bucketmapjoin.sortedmerge=false
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+17/05/22 17:40:51 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/05/22 17:41:05 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/05/22 17:41:05 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/05/22 17:41:06 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+17/05/22 17:41:08 WARN spark.SparkConf: The configuration key 'spark.akka.frameSize' has been deprecated as of Spark 1.6 and may be removed in the future. Please use the new key 'spark.rpc.message.maxSize' instead.
+17/05/22 17:41:20 WARN metastore.ObjectStore: Version information not found in metastore. hive.metastore.schema.verification is not enabled so recording the schema version 1.2.0
+17/05/22 17:41:21 WARN metastore.ObjectStore: Failed to get database default, returning NoSuchObjectException
+17/05/22 17:41:23 WARN metastore.ObjectStore: Failed to get database global_temp, returning NoSuchObjectException
+Spark context Web UI available at http://128.110.152.45:4040
+Spark context available as 'sc' (master = spark://ctl:7077, app id = app-20170522174108-0503).
+Spark session available as 'spark'.
+Welcome to
+      ____              __
+     / __/__  ___ _____/ /__
+    _\ \/ _ \/ _ `/ __/  '_/
+   /___/ .__/\_,_/_/ /_/\_\   version 2.1.0
+      /_/
+         
+Using Scala version 2.11.8 (OpenJDK 64-Bit Server VM, Java 1.8.0_121)
+Type in expressions to have them evaluated.
+Type :help for more information.
+
+scala> import java.io.File
+import java.io.File
+
+scala> import java.io.FileOutputStream
+import java.io.FileOutputStream
+
+scala> import org.apache.spark.sql._
+import org.apache.spark.sql._
+
+scala> 
+
+scala> val queryMsg = "#QUERY "
+queryMsg: String = "#QUERY "
+
+scala> val loadDBMsg = "#LOAD_DB "
+loadDBMsg: String = "#LOAD_DB "
+
+scala> val loadTable = "#LOAD_TABLE "
+loadTable: String = "#LOAD_TABLE "
+
+scala> val loadsqlHive = "#LOAD_SQL_CONTEXT "
+loadsqlHive: String = "#LOAD_SQL_CONTEXT "
+
+scala> val dataSource = "/nidan/orc/individualORC/slide4"
+dataSource: String = /nidan/orc/individualORC/slide4
+
+scala> 
+
+scala> def show_timing[T](proc: => T): T = {
+     |     val start=System.nanoTime()
+     |     val res = proc
+     |     val end = System.nanoTime()
+     |     println("Time elapsed: " + (end-start)/1000000000.0 + " seconds")
+     |     res
+     | }
+show_timing: [T](proc: => T)T
+
+scala> 
+
+scala> val writeToLocal = (in:(Array[Byte], Long, String)) =>{
+     |     val bytes = in._1
+     |     val output = in._3
+     |     
+     |     val writer = new FileOutputStream(output)
+     |     writer.write(bytes)
+     |     writer.close
+     |     1
+     |   }
+writeToLocal: ((Array[Byte], Long, String)) => Int = <function1>
+
+scala>   
+     |   val queries = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 196  OR  partitionIndex = 182 ",  2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 180  OR  partitionIndex = 188 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 159  OR  partitionIndex = 173 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 132  OR  partitionIndex = 133 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 111  OR  partitionIndex = 112 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 75  OR  partitionIndex = 76 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 4  OR  partitionIndex = 5 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 112  OR  partitionIndex = 8 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 8  OR  partitionIndex = 9 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 18  OR  partitionIndex = 30 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 165  OR  partitionIndex = 179 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 189  OR  partitionIndex = 203 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 84  OR  partitionIndex = 70 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 164  OR  partitionIndex = 165 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 138  OR  partitionIndex = 150 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 136  OR  partitionIndex = 122 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 14  OR  partitionIndex = 15 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 188  OR  partitionIndex = 189 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 191  OR  partitionIndex = 205 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 226  OR  partitionIndex = 212 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 149  OR  partitionIndex = 150 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 215  OR  partitionIndex = 229 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 23  OR  partitionIndex = 24 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 91  OR  partitionIndex = 105 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 187  OR  partitionIndex = 201 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 58  OR  partitionIndex = 44 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 56  OR  partitionIndex = 12 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 233  OR  partitionIndex = 234 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 17  OR  partitionIndex = 18 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 129  OR  partitionIndex = 143 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 120  partitionIndex = 120 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 218  OR  partitionIndex = 219 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 190  OR  partitionIndex = 191 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 39  OR  partitionIndex = 53 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 100  OR  partitionIndex = 101 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 130  OR  partitionIndex = 131 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 216  OR  partitionIndex = 217 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 135  OR  partitionIndex = 149 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 77  OR  partitionIndex = 78 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 104  OR  partitionIndex = 105 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 82  OR  partitionIndex = 94 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 31  OR  partitionIndex = 45 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 12  OR  partitionIndex = 13 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 176  OR  partitionIndex = 132 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 203  OR  partitionIndex = 204 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 229  OR  partitionIndex = 230 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 85  OR  partitionIndex = 86 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 107  OR  partitionIndex = 108 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 210  OR  partitionIndex = 211 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 177  OR  partitionIndex = 178 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 169  OR  partitionIndex = 170 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 204  OR  partitionIndex = 190 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 153  OR  partitionIndex = 167 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 182  OR  partitionIndex = 183 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 25  OR  partitionIndex = 26 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 227  OR  partitionIndex = 228 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 155  OR  partitionIndex = 169 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 115  OR  partitionIndex = 116 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 121  OR  partitionIndex = 135 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 193  OR  partitionIndex = 207 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 55  OR  partitionIndex = 56 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 28  OR  partitionIndex = 14 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 139  OR  partitionIndex = 140 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 9  OR  partitionIndex = 23 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 230  OR  partitionIndex = 216 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 106  OR  partitionIndex = 92 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 195  OR  partitionIndex = 196 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 87  OR  partitionIndex = 88 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 165  OR  partitionIndex = 166 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 225  OR  partitionIndex = 226 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 61  OR  partitionIndex = 75 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 167  OR  partitionIndex = 168 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 65  OR  partitionIndex = 79 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 98  OR  partitionIndex = 99 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 125  OR  partitionIndex = 139 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 126  OR  partitionIndex = 127 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 10  OR  partitionIndex = 11 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 212  OR  partitionIndex = 213 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 74  OR  partitionIndex = 75 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 142  OR  partitionIndex = 154 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 124  OR  partitionIndex = 125 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 137  OR  partitionIndex = 138 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 220  OR  partitionIndex = 221 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 29  OR  partitionIndex = 30 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 213  OR  partitionIndex = 227 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 145  OR  partitionIndex = 146 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 63  OR  partitionIndex = 77 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 2  OR  partitionIndex = 3 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 13  OR  partitionIndex = 27 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 158  OR  partitionIndex = 159 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 161  OR  partitionIndex = 175 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 69  OR  partitionIndex = 83 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 133  OR  partitionIndex = 147 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 78  OR  partitionIndex = 90 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 46  OR  partitionIndex = 32 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 207  OR  partitionIndex = 208 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 117  OR  partitionIndex = 118 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 43  OR  partitionIndex = 57 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 154  OR  partitionIndex = 155 ", 2),
+     | ("SELECT imageBytes FROM data WHERE  partitionIndex = 21  OR  partitionIndex = 22 ", 2)
+     | )
+queries: List[(String, Int)] = List(("SELECT imageBytes FROM data WHERE  partitionIndex = 196  OR  partitionIndex = 182 ",2), ("SELECT imageBytes FROM data WHERE  partitionIndex = 180  OR  partitionIndex = 188 ",2), ("SELECT imageBytes FROM data WHERE  partitionIndex = 159  OR  partitionIndex = 173 ",2), ("SELECT imageBytes FROM data WHERE  partitionIndex = 132  OR  partitionIndex = 133 ",2), ("SELECT imageBytes FROM data WHERE  partitionIndex = 111  OR  partitionIndex = 112 ",2), ("SELECT imageBytes FROM data WHERE  partitionIndex = 75  OR  partitionIndex = 76 ",2), ("SELECT imageBytes FROM data WHERE  partitionIndex = 4  OR  partitionIndex = 5 ",2), ("SELECT imageBytes FROM data WHERE  partitionIndex = 112  OR  partitionIndex = 8 ",2), ("SELECT imageBytes FROM data WHERE  partitionInd...
+scala> 
+
+scala> val sqlContext = new org.apache.spark.sql.hive.HiveContext(sc)
+warning: there was one deprecation warning; re-run with -deprecation for details
+sqlContext: org.apache.spark.sql.hive.HiveContext = org.apache.spark.sql.hive.HiveContext@2ab91b65
+
+scala> 
+
+scala> show_timing{sqlContext.read.orc(dataSource).createOrReplaceTempView("data")}
+Time elapsed: 3.9378798 seconds
+
+scala> 
+
+scala> show_timing{sqlContext.sql(queries(0)._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, ind ex) => (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+[Stage 0:>                                                        (0 + 0) / 115][Stage 0:>                                                      (0 + 112) / 115][Stage 0:=================>                                     (36 + 79) / 115][Stage 0:==========================>                            (55 + 60) / 115][Stage 0:=============================>                         (61 + 54) / 115][Stage 0:==============================>                        (63 + 52) / 115][Stage 0:==============================>                        (64 + 51) / 115][Stage 0:===============================>                       (66 + 49) / 115][Stage 0:=================================>                     (70 + 45) / 115][Stage 0:==================================>                    (73 + 42) / 115][Stage 0:=======================================>               (83 + 32) / 115][Stage 0:============================================>          (93 + 22) / 115][Stage 0:==============================================>       (100 + 15) / 115][Stage 0:================================================>     (104 + 11) / 115][Stage 0:===================================================>   (107 + 8) / 115][Stage 0:=====================================================> (111 + 4) / 115][Stage 0:======================================================>(114 + 1) / 115]                                                                                [Stage 1:=============================>                         (62 + 54) / 116][Stage 1:================================>                      (68 + 48) / 116][Stage 1:=================================>                     (70 + 46) / 116][Stage 1:==================================>                    (72 + 44) / 116][Stage 1:====================================>                  (76 + 40) / 116][Stage 1:==========================================>            (89 + 27) / 116][Stage 1:==============================================>       (100 + 16) / 116][Stage 1:====================================================>  (111 + 5) / 116][Stage 1:=====================================================> (113 + 3) / 116]                                                                                Time elapsed: 12.646801121 seconds
+res2: Int = 0
+
+scala> 
+
+scala> for (query <- queries){
+     | println(s">> Running query: ${query._1}")
+     | show_timing{sqlContext.sql(query._1).map(_.getAs[Array[Byte]](0)).rdd.zipWithIndex.map{case (bytes, index) = > (bytes, index, s"o6_${index}.JPEG")}.collect.map(writeToLocal).filter(_ => false).size}
+     | }
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 196  OR  partitionIndex = 182 
+[Stage 2:====================>                                  (43 + 72) / 115][Stage 2:======================>                                (47 + 68) / 115][Stage 2:=============================>                         (61 + 54) / 115][Stage 2:===============================>                       (65 + 50) / 115][Stage 2:==================================>                    (72 + 43) / 115][Stage 2:=======================================>               (83 + 32) / 115][Stage 2:============================================>          (93 + 22) / 115][Stage 2:===============================================>       (99 + 16) / 115][Stage 2:===================================================>   (107 + 8) / 115][Stage 2:=====================================================> (111 + 4) / 115][Stage 2:======================================================>(113 + 2) / 115]                                                                                [Stage 3:===========================>                           (57 + 59) / 116][Stage 3:===============================>                       (66 + 50) / 116][Stage 3:================================>                      (69 + 47) / 116][Stage 3:====================================>                  (78 + 38) / 116][Stage 3:=============================================>         (96 + 20) / 116][Stage 3:=================================================>    (106 + 10) / 116][Stage 3:=====================================================> (112 + 4) / 116][Stage 3:======================================================>(114 + 2) / 116]                                                                                Time elapsed: 5.092029176 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 180  OR  partitionIndex = 188 
+[Stage 4:=========================>                             (54 + 61) / 115][Stage 4:=============================>                         (61 + 54) / 115][Stage 4:================================>                      (68 + 47) / 115][Stage 4:==================================>                    (73 + 42) / 115][Stage 4:=======================================>               (82 + 33) / 115][Stage 4:==============================================>        (98 + 17) / 115][Stage 4:================================================>     (104 + 11) / 115][Stage 4:==================================================>    (106 + 9) / 115][Stage 4:====================================================>  (109 + 6) / 115][Stage 4:=====================================================> (112 + 3) / 115]                                                                                [Stage 5:============================>                          (61 + 55) / 116][Stage 5:=================================>                     (70 + 46) / 116][Stage 5:===================================>                   (74 + 42) / 116][Stage 5:=====================================>                 (79 + 37) / 116][Stage 5:===========================================>           (92 + 24) / 116][Stage 5:==============================================>        (99 + 17) / 116][Stage 5:===================================================>   (109 + 7) / 116][Stage 5:=====================================================> (112 + 4) / 116][Stage 5:======================================================>(115 + 1) / 116]                                                                                Time elapsed: 5.10315981 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 159  OR  partitionIndex = 173 
+[Stage 6:==============================>                        (63 + 52) / 115][Stage 6:==================================>                    (72 + 43) / 115][Stage 6:===================================>                   (74 + 41) / 115][Stage 6:======================================>                (81 + 34) / 115][Stage 6:============================================>          (92 + 23) / 115][Stage 6:====================================================>  (110 + 5) / 115]                                                                                [Stage 7:===============================>                       (66 + 50) / 116][Stage 7:===================================>                   (74 + 42) / 116][Stage 7:=====================================>                 (79 + 37) / 116][Stage 7:==========================================>            (89 + 27) / 116][Stage 7:==============================================>        (98 + 18) / 116][Stage 7:================================================>     (105 + 11) / 116]                                                                                Time elapsed: 3.913914166 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 132  OR  partitionIndex = 133 
+[Stage 8:==============================>                        (63 + 52) / 115][Stage 8:=================================>                     (70 + 45) / 115][Stage 8:=====================================>                 (79 + 36) / 115][Stage 8:===========================================>           (91 + 24) / 115][Stage 8:==============================================>        (97 + 18) / 115][Stage 8:===============================================>      (101 + 14) / 115][Stage 8:====================================================>  (110 + 5) / 115][Stage 8:=====================================================> (112 + 3) / 115]                                                                                [Stage 9:=============================>                         (63 + 53) / 116][Stage 9:================================>                      (68 + 48) / 116][Stage 9:======================================>                (82 + 34) / 116][Stage 9:============================================>          (93 + 23) / 116][Stage 9:==============================================>        (99 + 17) / 116][Stage 9:================================================>     (105 + 11) / 116][Stage 9:=====================================================> (112 + 4) / 116]                                                                                Time elapsed: 4.214776266 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 111  OR  partitionIndex = 112 
+[Stage 10:==============================>                       (64 + 51) / 115][Stage 10:=================================>                    (71 + 44) / 115][Stage 10:=======================================>              (85 + 30) / 115][Stage 10:============================================>         (94 + 21) / 115][Stage 10:==============================================>       (98 + 17) / 115][Stage 10:===================================================>  (109 + 6) / 115][Stage 10:=====================================================>(114 + 1) / 115]                                                                                [Stage 11:==============================>                       (66 + 50) / 116][Stage 11:=================================>                    (73 + 43) / 116][Stage 11:=======================================>              (85 + 31) / 116][Stage 11:=========================================>            (90 + 26) / 116][Stage 11:==============================================>      (102 + 14) / 116][Stage 11:===================================================>  (110 + 6) / 116][Stage 11:=====================================================>(115 + 1) / 116]                                                                                Time elapsed: 3.981931126 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 75  OR  partitionIndex = 76 
+[Stage 12:=============================>                        (63 + 52) / 115][Stage 12:===================================>                  (75 + 40) / 115][Stage 12:=======================================>              (84 + 31) / 115][Stage 12:=============================================>        (96 + 19) / 115][Stage 12:==============================================>       (99 + 16) / 115][Stage 12:===============================================>     (103 + 12) / 115][Stage 12:=================================================>    (106 + 9) / 115]                                                                                [Stage 13:================================>                     (70 + 46) / 116][Stage 13:=====================================>                (80 + 36) / 116][Stage 13:==============================================>      (102 + 14) / 116][Stage 13:====================================================> (112 + 4) / 116][Stage 13:====================================================> (113 + 3) / 116]                                                                                Time elapsed: 3.841263933 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 4  OR  partitionIndex = 5 
+[Stage 14:==============================>                       (64 + 51) / 115][Stage 14:=================================>                    (71 + 44) / 115][Stage 14:=======================================>              (84 + 31) / 115][Stage 14:============================================>         (95 + 20) / 115][Stage 14:===============================================>     (104 + 11) / 115][Stage 14:===================================================>  (109 + 6) / 115][Stage 14:====================================================> (111 + 4) / 115][Stage 14:======================================================(115 + 0) / 115]                                                                                [Stage 15:===============================>                      (68 + 48) / 116][Stage 15:=======================================>              (85 + 31) / 116][Stage 15:=============================================>       (100 + 16) / 116][Stage 15:=================================================>    (107 + 9) / 116][Stage 15:====================================================> (112 + 4) / 116]                                                                                Time elapsed: 4.373502532 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 112  OR  partitionIndex = 8 
+[Stage 16:==============================>                       (65 + 50) / 115][Stage 16:=================================>                    (71 + 44) / 115][Stage 16:=======================================>              (84 + 31) / 115][Stage 16:==============================================>       (98 + 17) / 115][Stage 16:===============================================>     (104 + 11) / 115][Stage 16:===================================================>  (110 + 5) / 115][Stage 16:=====================================================>(113 + 2) / 115]                                                                                [Stage 17:=================================>                    (72 + 44) / 116][Stage 17:===========================================>          (93 + 23) / 116][Stage 17:====================================================> (112 + 4) / 116][Stage 17:=====================================================>(114 + 2) / 116]                                                                                Time elapsed: 3.758215226 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 8  OR  partitionIndex = 9 
+[Stage 18:============================>                         (61 + 54) / 115][Stage 18:================================>                     (70 + 45) / 115][Stage 18:======================================>               (83 + 32) / 115][Stage 18:===========================================>          (92 + 23) / 115][Stage 18:=============================================>        (97 + 18) / 115][Stage 18:================================================>    (105 + 10) / 115][Stage 18:====================================================> (112 + 3) / 115][Stage 18:=====================================================>(114 + 1) / 115]                                                                                [Stage 19:===============================>                      (67 + 49) / 116][Stage 19:=====================================>                (80 + 36) / 116][Stage 19:===========================================>          (93 + 23) / 116][Stage 19:=============================================>       (100 + 16) / 116][Stage 19:===============================================>     (103 + 13) / 116][Stage 19:=================================================>    (107 + 9) / 116][Stage 19:====================================================> (112 + 4) / 116][Stage 19:====================================================> (113 + 3) / 116][Stage 19:=====================================================>(115 + 1) / 116]                                                                                Time elapsed: 4.977264916 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 18  OR  partitionIndex = 30 
+[Stage 20:==============================>                       (64 + 51) / 115][Stage 20:=================================>                    (72 + 43) / 115][Stage 20:=========================================>            (88 + 27) / 115][Stage 20:==============================================>      (101 + 14) / 115][Stage 20:==================================================>   (107 + 8) / 115][Stage 20:====================================================> (112 + 3) / 115]                                                                                [Stage 21:================================>                     (70 + 46) / 116][Stage 21:=====================================>                (81 + 35) / 116][Stage 21:===========================================>          (94 + 22) / 116][Stage 21:==============================================>      (102 + 14) / 116][Stage 21:==================================================>   (108 + 8) / 116][Stage 21:=====================================================>(114 + 2) / 116][Stage 21:=====================================================>(115 + 1) / 116]                                                                                Time elapsed: 4.68490139 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 165  OR  partitionIndex = 179 
+[Stage 22:===============================>                      (67 + 48) / 115][Stage 22:=====================================>                (79 + 36) / 115][Stage 22:==========================================>           (90 + 25) / 115][Stage 22:===============================================>     (103 + 12) / 115][Stage 22:====================================================> (111 + 4) / 115]                                                                                [Stage 23:====================================>                 (78 + 38) / 116][Stage 23:============================================>         (95 + 21) / 116][Stage 23:==================================================>   (109 + 7) / 116][Stage 23:=====================================================>(115 + 1) / 116]                                                                                Time elapsed: 3.04240565 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 189  OR  partitionIndex = 203 
+[Stage 24:=================================>                    (71 + 44) / 115][Stage 24:===================================>                  (76 + 39) / 115][Stage 24:======================================>               (83 + 32) / 115][Stage 24:===========================================>          (93 + 22) / 115][Stage 24:================================================>    (105 + 10) / 115][Stage 24:=====================================================>(113 + 2) / 115][Stage 24:=====================================================>(114 + 1) / 115]                                                                                [Stage 25:=================================>                    (72 + 44) / 116][Stage 25:=========================================>            (90 + 26) / 116][Stage 25:===============================================>     (104 + 12) / 116][Stage 25:==================================================>   (108 + 8) / 116][Stage 25:====================================================> (113 + 3) / 116]                                                                                Time elapsed: 3.904983371 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 84  OR  partitionIndex = 70 
+[Stage 26:===============================>                      (67 + 48) / 115][Stage 26:====================================>                 (78 + 37) / 115][Stage 26:==========================================>           (91 + 24) / 115][Stage 26:=============================================>        (97 + 18) / 115][Stage 26:===============================================>     (104 + 11) / 115][Stage 26:==================================================>   (107 + 8) / 115][Stage 26:====================================================> (111 + 4) / 115]                                                                                [Stage 27:==================================>                   (74 + 42) / 116][Stage 27:=========================================>            (90 + 26) / 116][Stage 27:============================================>         (95 + 21) / 116][Stage 27:==============================================>      (101 + 15) / 116][Stage 27:===============================================>     (103 + 13) / 116][Stage 27:====================================================> (112 + 4) / 116]                                                                                Time elapsed: 4.043131729 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 164  OR  partitionIndex = 165 
+[Stage 28:=================================>                    (71 + 44) / 115][Stage 28:======================================>               (83 + 32) / 115][Stage 28:============================================>         (94 + 21) / 115][Stage 28:==============================================>      (101 + 14) / 115][Stage 28:===================================================>  (109 + 6) / 115][Stage 28:=====================================================>(114 + 1) / 115]                                                                                [Stage 29:==================================>                   (74 + 42) / 116][Stage 29:=========================================>            (89 + 27) / 116][Stage 29:==============================================>      (101 + 15) / 116][Stage 29:=================================================>    (107 + 9) / 116][Stage 29:=====================================================>(114 + 2) / 116]                                                                                Time elapsed: 3.507229739 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 138  OR  partitionIndex = 150 
+[Stage 30:=============================>                        (62 + 53) / 115][Stage 30:====================================>                 (77 + 38) / 115][Stage 30:==========================================>           (91 + 24) / 115][Stage 30:==============================================>      (100 + 15) / 115][Stage 30:===============================================>     (104 + 11) / 115][Stage 30:=====================================================>(113 + 2) / 115]                                                                                [Stage 31:===============================>                      (68 + 48) / 116][Stage 31:===================================>                  (77 + 39) / 116][Stage 31:==============================================>       (99 + 17) / 116][Stage 31:==================================================>   (109 + 7) / 116][Stage 31:====================================================> (113 + 3) / 116]                                                                                Time elapsed: 3.301547393 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 136  OR  partitionIndex = 122 
+[Stage 32:================================>                     (69 + 46) / 115][Stage 32:========================================>             (87 + 28) / 115][Stage 32:===========================================>          (93 + 22) / 115][Stage 32:================================================>    (105 + 10) / 115][Stage 32:====================================================> (111 + 4) / 115]                                                                                [Stage 33:===================================>                  (76 + 40) / 116][Stage 33:============================================>         (95 + 21) / 116][Stage 33:===============================================>     (104 + 12) / 116][Stage 33:====================================================> (113 + 3) / 116]                                                                                Time elapsed: 3.073617432 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 14  OR  partitionIndex = 15 
+[Stage 34:===============================>                      (67 + 48) / 115][Stage 34:========================================>             (86 + 29) / 115][Stage 34:==========================================>           (91 + 24) / 115][Stage 34:============================================>         (94 + 21) / 115][Stage 34:===============================================>     (103 + 12) / 115][Stage 34:===================================================>  (110 + 5) / 115]                                                                                [Stage 35:===============================>                      (67 + 49) / 116][Stage 35:=====================================>                (80 + 36) / 116][Stage 35:===========================================>          (94 + 22) / 116][Stage 35:==================================================>   (108 + 8) / 116][Stage 35:=====================================================>(114 + 2) / 116][Stage 35:=====================================================>(115 + 1) / 116]                                                                                Time elapsed: 3.78853974 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 188  OR  partitionIndex = 189 
+[Stage 36:==============================>                       (66 + 49) / 115][Stage 36:===================================>                  (75 + 40) / 115][Stage 36:=========================================>            (88 + 27) / 115][Stage 36:===============================================>     (103 + 12) / 115][Stage 36:===================================================>  (109 + 6) / 115]                                                                                [Stage 37:=================================>                    (72 + 44) / 116][Stage 37:=======================================>              (85 + 31) / 116][Stage 37:=============================================>        (97 + 19) / 116][Stage 37:===================================================>  (110 + 6) / 116][Stage 37:=====================================================>(115 + 1) / 116]                                                                                Time elapsed: 3.319705905 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 191  OR  partitionIndex = 205 
+[Stage 38:==============================>                       (66 + 49) / 115][Stage 38:===================================>                  (76 + 39) / 115][Stage 38:============================================>         (94 + 21) / 115][Stage 38:==================================================>   (107 + 8) / 115][Stage 38:=====================================================>(113 + 2) / 115]                                                                                [Stage 39:====================================>                 (79 + 37) / 116][Stage 39:===========================================>          (93 + 23) / 116][Stage 39:==================================================>   (108 + 8) / 116][Stage 39:===================================================>  (110 + 6) / 116][Stage 39:====================================================> (112 + 4) / 116][Stage 39:=====================================================>(114 + 2) / 116]                                                                                Time elapsed: 4.836658693 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 226  OR  partitionIndex = 212 
+[Stage 40:==============================>                       (66 + 49) / 115][Stage 40:=====================================>                (79 + 36) / 115][Stage 40:===========================================>          (93 + 22) / 115][Stage 40:===============================================>     (104 + 11) / 115][Stage 40:=====================================================>(113 + 2) / 115]                                                                                [Stage 41:================================>                     (70 + 46) / 116][Stage 41:=======================================>              (85 + 31) / 116][Stage 41:============================================>         (96 + 20) / 116][Stage 41:===============================================>     (104 + 12) / 116][Stage 41:==================================================>   (108 + 8) / 116][Stage 41:====================================================> (113 + 3) / 116][Stage 41:=====================================================>(115 + 1) / 116]                                                                                Time elapsed: 3.431442874 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 149  OR  partitionIndex = 150 
+[Stage 42:==============================>                       (64 + 51) / 115][Stage 42:==================================>                   (74 + 41) / 115][Stage 42:=========================================>            (89 + 26) / 115][Stage 42:===============================================>     (104 + 11) / 115][Stage 42:===================================================>  (110 + 5) / 115][Stage 42:=====================================================>(114 + 1) / 115]                                                                                [Stage 43:================================>                     (70 + 46) / 116][Stage 43:========================================>             (87 + 29) / 116][Stage 43:=============================================>        (98 + 18) / 116][Stage 43:================================================>    (106 + 10) / 116][Stage 43:=====================================================>(114 + 2) / 116]                                                                                Time elapsed: 3.207170217 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 215  OR  partitionIndex = 229 
+[Stage 44:==================================>                   (74 + 41) / 115][Stage 44:========================================>             (86 + 29) / 115][Stage 44:===============================================>     (103 + 12) / 115][Stage 44:===================================================>  (109 + 6) / 115][Stage 44:====================================================> (112 + 3) / 115][Stage 44:=====================================================>(114 + 1) / 115]                                                                                [Stage 45:=================================>                    (73 + 43) / 116][Stage 45:======================================>               (82 + 34) / 116][Stage 45:=============================================>        (98 + 18) / 116][Stage 45:====================================================> (112 + 4) / 116][Stage 45:=====================================================>(115 + 1) / 116]                                                                                Time elapsed: 3.497654765 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 23  OR  partitionIndex = 24 
+[Stage 46:=================================>                    (72 + 43) / 115][Stage 46:========================================>             (87 + 28) / 115][Stage 46:===============================================>     (102 + 13) / 115][Stage 46:===================================================>  (110 + 5) / 115][Stage 46:=====================================================>(113 + 2) / 115]                                                                                [Stage 47:===============================>                      (68 + 48) / 116][Stage 47:=====================================>                (80 + 36) / 116][Stage 47:=========================================>            (90 + 26) / 116][Stage 47:===============================================>     (103 + 13) / 116][Stage 47:=====================================================>(114 + 2) / 116][Stage 47:=====================================================>(115 + 1) / 116]                                                                                Time elapsed: 4.360573648 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 91  OR  partitionIndex = 105 
+[Stage 48:==============================>                       (66 + 49) / 115][Stage 48:====================================>                 (78 + 37) / 115][Stage 48:==============================================>       (99 + 16) / 115][Stage 48:==================================================>   (108 + 7) / 115][Stage 48:===================================================>  (110 + 5) / 115][Stage 48:====================================================> (112 + 3) / 115][Stage 48:=====================================================>(113 + 2) / 115]                                                                                [Stage 49:===================================>                  (76 + 40) / 116][Stage 49:=========================================>            (90 + 26) / 116][Stage 49:==============================================>      (101 + 15) / 116][Stage 49:==================================================>   (109 + 7) / 116][Stage 49:=====================================================>(115 + 1) / 116]                                                                                Time elapsed: 3.549034525 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 187  OR  partitionIndex = 201 
+[Stage 50:================================>                     (70 + 45) / 115][Stage 50:======================================>               (81 + 34) / 115][Stage 50:==============================================>       (99 + 16) / 115][Stage 50:================================================>    (105 + 10) / 115][Stage 50:=================================================>    (106 + 9) / 115][Stage 50:====================================================> (111 + 4) / 115][Stage 50:====================================================> (112 + 3) / 115][Stage 50:=====================================================>(114 + 1) / 115]                                                                                [Stage 51:=================================>                    (71 + 45) / 116][Stage 51:=======================================>              (85 + 31) / 116][Stage 51:===============================================>     (104 + 12) / 116][Stage 51:==================================================>   (109 + 7) / 116][Stage 51:===================================================>  (111 + 5) / 116][Stage 51:=====================================================>(114 + 2) / 116]                                                                                Time elapsed: 3.949811562 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 58  OR  partitionIndex = 44 
+[Stage 52:===================================>                  (75 + 40) / 115][Stage 52:===========================================>          (92 + 23) / 115][Stage 52:==============================================>       (99 + 16) / 115][Stage 52:=====================================================>(113 + 2) / 115]                                                                                [Stage 53:===============================>                      (68 + 48) / 116][Stage 53:======================================>               (83 + 33) / 116][Stage 53:============================================>         (95 + 21) / 116][Stage 53:===============================================>     (104 + 12) / 116][Stage 53:=====================================================>(114 + 2) / 116][Stage 53:=====================================================>(115 + 1) / 116]                                                                                Time elapsed: 3.447155489 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 56  OR  partitionIndex = 12 
+[Stage 54:================================>                     (70 + 45) / 115][Stage 54:=======================================>              (84 + 31) / 115][Stage 54:==============================================>       (99 + 16) / 115][Stage 54:===============================================>     (103 + 12) / 115][Stage 54:=================================================>    (106 + 9) / 115][Stage 54:=====================================================>(114 + 1) / 115]                                                                                [Stage 55:=================================>                    (71 + 45) / 116][Stage 55:======================================>               (83 + 33) / 116][Stage 55:===========================================>          (94 + 22) / 116][Stage 55:==================================================>   (108 + 8) / 116][Stage 55:====================================================> (113 + 3) / 116][Stage 55:=====================================================>(114 + 2) / 116]                                                                                Time elapsed: 4.067920107 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 233  OR  partitionIndex = 234 
+[Stage 56:==============================>                       (65 + 50) / 115][Stage 56:====================================>                 (77 + 38) / 115][Stage 56:==========================================>           (91 + 24) / 115][Stage 56:================================================>    (105 + 10) / 115][Stage 56:=====================================================>(114 + 1) / 115]                                                                                [Stage 57:================================>                     (69 + 47) / 116][Stage 57:======================================>               (82 + 34) / 116][Stage 57:=========================================>            (90 + 26) / 116][Stage 57:==================================================>   (108 + 8) / 116][Stage 57:====================================================> (112 + 4) / 116][Stage 57:=====================================================>(115 + 1) / 116]                                                                                Time elapsed: 3.173100504 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 17  OR  partitionIndex = 18 
+[Stage 58:===============================>                      (68 + 47) / 115][Stage 58:======================================>               (82 + 33) / 115][Stage 58:==============================================>       (99 + 16) / 115][Stage 58:===============================================>     (104 + 11) / 115][Stage 58:===================================================>  (110 + 5) / 115][Stage 58:====================================================> (111 + 4) / 115]                                                                                [Stage 59:=================================>                    (72 + 44) / 116][Stage 59:========================================>             (86 + 30) / 116][Stage 59:===============================================>     (104 + 12) / 116][Stage 59:=====================================================>(115 + 1) / 116]                                                                                Time elapsed: 4.047027024 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 129  OR  partitionIndex = 143 
+[Stage 60:===============================>                      (67 + 48) / 115][Stage 60:=================================>                    (72 + 43) / 115][Stage 60:=======================================>              (84 + 31) / 115][Stage 60:=============================================>        (96 + 19) / 115][Stage 60:====================================================> (112 + 3) / 115]                                                                                [Stage 61:================================>                     (70 + 46) / 116][Stage 61:=====================================>                (80 + 36) / 116][Stage 61:===========================================>          (94 + 22) / 116][Stage 61:===============================================>     (105 + 11) / 116][Stage 61:==================================================>   (108 + 8) / 116][Stage 61:===================================================>  (110 + 6) / 116][Stage 61:====================================================> (113 + 3) / 116]                                                                                Time elapsed: 3.376844813 seconds
+>> Running query: SELECT imageBytes FROM data WHERE  partitionIndex = 120  partitionIndex = 120 
+org.apache.spark.sql.catalyst.parser.ParseException:
+extraneous input 'partitionIndex' expecting {<EOF>, '.', '[', 'GROUP', 'ORDER', 'HAVING', 'LIMIT', 'OR', 'AND', 'IN', NOT, 'BETWEEN', 'LIKE', RLIKE, 'IS', 'WINDOW', 'UNION', 'EXCEPT', 'MINUS', 'INTERSECT', EQ, '<=>', '<>', '!=', '<', LTE, '>', GTE, '+', '-', '*', '/', '%', 'DIV', '&', '|', '^', 'SORT', 'CLUSTER', 'DISTRIBUTE'}(line 1, pos 57)
+
+== SQL ==
+SELECT imageBytes FROM data WHERE  partitionIndex = 120  partitionIndex = 120
+---------------------------------------------------------^^^
+
+  at org.apache.spark.sql.catalyst.parser.ParseException.withCommand(ParseDriver.scala:197)
+  at org.apache.spark.sql.catalyst.parser.AbstractSqlParser.parse(ParseDriver.scala:99)
+  at org.apache.spark.sql.execution.SparkSqlParser.parse(SparkSqlParser.scala:45)
+  at org.apache.spark.sql.catalyst.parser.AbstractSqlParser.parsePlan(ParseDriver.scala:53)
+  at org.apache.spark.sql.SparkSession.sql(SparkSession.scala:592)
+  at org.apache.spark.sql.SQLContext.sql(SQLContext.scala:699)
+  at $anonfun$1$$anonfun$apply$1.apply$mcI$sp(<console>:40)
+  at $anonfun$1$$anonfun$apply$1.apply(<console>:40)
+  at $anonfun$1$$anonfun$apply$1.apply(<console>:40)
+  at show_timing(<console>:30)
+  at $anonfun$1.apply(<console>:40)
+  at $anonfun$1.apply(<console>:38)
+  at scala.collection.immutable.List.foreach(List.scala:381)
+  ... 53 elided
+
+scala> 
+
+scala> :quit
+
+real	3m7.120s
+user	4m39.016s
+sys	0m11.372s
