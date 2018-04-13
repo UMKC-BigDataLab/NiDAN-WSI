@@ -17,110 +17,98 @@ import javax.imageio.ImageWriteParam
 import javax.imageio.IIOImage
 import javax.imageio.stream.FileImageOutputStream
 
+
 object SparkTileGenerator2 {
-  
-  def time[R](block: => R): (R, Double) = {  
-    val t0 = System.nanoTime()
-    val result = block    // call-by-name
-    val t1 = System.nanoTime()
-    val secs = (t1 - t0)/1000000000.0
-    (result, secs)
-}
+  var localOutput = ""
+
   
   def main(args: Array[String]): Unit = {
     val fileName = args(0)
-    val hdfsInput = args(1)
-    val hdfsOutput = args(2)
-    val localInput = args(3)
+    val localInput = args(1)
+    localOutput = args(2)
+    
+    val n = args(3).toInt //Number of partitionss
+    val level = args(4).toInt
+    val clusterNodes = args(5).toInt
+    
+    val logger = NidanContext.log
+    val sc = NidanContext.sparkContext
+    val sql = NidanContext.sqlContext
     
     // Getting the nodes in a fancy way ;)
-    val sc = NidanContext.sparkContext
     val host = sc.getConf.get("spark.driver.host")
     val nodes = sc.getExecutorMemoryStatus.map(_._1).filter(!_.contains(host)).size
+    if(nodes == clusterNodes) 
+      logger.info(s">> ClusterNodes ${clusterNodes} and Nodes ${nodes} are equal")
     
-    val seq = sc.parallelize(Seq(1 to nodes))
+    // Let's rock it
+    val squareMatrix = CoordinateGenerator.squareMatrixfromDimension(_, _)
+    val localFile = localInput + "/" + fileName
+    val dim = tileDimension(new File(localFile))
     
-    // Download the copy into the local dir
-    seq.map{item =>
-      val from = hdfsInput + "/" + fileName
-      val to = localInput + "/" + fileName
+    /*** Operations
+     * 1. Get the tile coordinate
+     * 2. Repartition the RDD with as many nodes in the cluster
+     * 3. Extract the tiles in groups to create less OpenSlide instances
+     * 4. Get the errors that occour
+     * 5. Count the errors
+     */
+    val coords = sc.parallelize(squareMatrix(dim, n))
+      .map(coord2meta(localFile, level, n, _))
+      .repartition(clusterNodes)
+      .mapPartitionsWithIndex(partitionGroups)
+      .filter(_ == 1)
+      .count
       
-      
-    }
-    
-    // Generate the array of tiles from the local copy
-    
-    
-    
-    // Group the array of tiles using range partition, based on the index
-    // and the cluster's size
-    
-    
-    val input = args(0)
-    val output = args(1)
-    val n = args(2).toInt
-    val level = args(3).toInt
-    
-    
-    
-    
-    // Read the image dimensions
-    val os = new OpenSlide(new File(input))
+    logger.info(s"Errors generated: $coords")
+  }
+  def tileDimension(svsFile:File):TileDimension = {
+    val os = new OpenSlide(svsFile)
     val dim = new TileDimension(os.getLevel0Width, os.getLevel0Height)
-    val coords = sc.parallelize(CoordinateGenerator.squareMatrixfromDimension(dim, n))
+    os.close
     
-    // Get the partitions
-    val metas = coords.map{item =>
-      val index = new nidan.tiles.Index(item._2, item._3, item._1, item._1, item._1)
-      val meta = new TileMetadata(input, input, level,item._4, item._5, index,(n,n))
-      (input, meta)
-    }
-        
-    // Extract the data
-    val tiles = metas.map{item => 
-      
-      val startTime = System.nanoTime
-      
-      val oslide = new OpenSlide(new File(item._1))
-      val point = item._2.position
-      val outputFile = output + "/" + new File(item._2.toString).getName
-      
-      // Get the image canvas
-      val w = item._2.dimension.width.toInt
-      val h = item._2.dimension.height.toInt
-      
-      val canvas = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB)
-      val graph = canvas.getGraphics
-      val data = canvas.getRaster.getDataBuffer.asInstanceOf[DataBufferInt].getData
-      
-      // Get the data from os
-      oslide.paintRegionARGB(data, point.x, point.y, level, w, h)
-      oslide.close
-      
-      // Write the output in local file
-      graph.drawImage(canvas, 0, 0, w, h, null)
-      writeJPEG(canvas.getRaster, outputFile, ImageFormats.JPEG)
-      
-      val totalTime = (System.nanoTime - startTime) / 1000000000
-      
-      val img = new File(outputFile)
-      //Imaging.writeImage(canvas, img, ImageFormats.JPEG, null)
-      graph.dispose
-      
-      val error = if (img.exists) 1 else 0
-      (error, totalTime)
-    }
+    dim
+  }
+  
+  def coord2meta(file:String, level:Int, n:Int, coord:(Int,Int,Int, TilePoint,TileDimension)) = {
+    val index = new nidan.tiles.Index(coord._2, coord._3, coord._1, coord._1, coord._1)
+    val meta = new TileMetadata(file, file, level,coord._4, coord._5, index,(n,n))
     
-    // Test it
-    //tiles.saveAsTextFile(output + "/testOut")
+    (file, meta)
+  }
+  
+  val partitionGroups = (k:Int, it:Iterator[(String, TileMetadata)]) => {
+    val file = it.toSeq.head._1
+    val os = new OpenSlide(new File(file))
+    val errors = it.map(el => writeTileLocal(os, el._2, localOutput))
+    os.close
     
+    errors
+  }
+  
+  // Take a tile object and write it down in the local storage
+  def writeTileLocal(oslide:OpenSlide, meta:TileMetadata, outputDir:String) = {
+    val outputFile = outputDir + new File(meta.toString).getName
     
-    // Count the errors
-    val totalSecs = tiles.map(_._2).sum
-    val error = tiles.filter(_._1 < 1).count
-    println(">> Errors: " + error)
-    println(">> Total seconds: " + totalSecs)
-    sc.stop()
+    // Get the tile information
+    val w = meta.dimension.width.toInt
+    val h = meta.dimension.height.toInt
+    val point = meta.position
+    
+    // Build up canvas to write the tile
+    val canvas = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB)
+    val data = canvas.getRaster.getDataBuffer.asInstanceOf[DataBufferInt].getData
+    val graph = canvas.getGraphics
+    
+    // Extract and write the tile
+    oslide.paintRegionARGB(data, point.x, point.y, meta.level, w, h)
+    graph.drawImage(canvas, 0, 0, w, h, null)
+    writeJPEG(canvas.getRaster, outputFile, ImageFormats.JPEG)
+    graph.dispose
+    
+    // Check if file was written, 0 => no error, 1 => means error
+    val img = new File(outputFile)
+    if (img.exists) 0 else 1
   }
   
   def writeJPEG(raster:WritableRaster, output:String, format:ImageFormats){

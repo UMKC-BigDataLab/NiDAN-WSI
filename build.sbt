@@ -1,6 +1,6 @@
 organization  := "umkc"
 
-name := "nidan.core"
+name := "nidan-wsi"
 
 version       := "0.1"
 
