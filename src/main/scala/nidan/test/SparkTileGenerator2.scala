@@ -16,6 +16,7 @@ import javax.imageio.plugins.jpeg.JPEGImageWriteParam
 import javax.imageio.ImageWriteParam
 import javax.imageio.IIOImage
 import javax.imageio.stream.FileImageOutputStream
+import nidan.utils.NidanUtils
 
 
 object SparkTileGenerator2 {
@@ -41,6 +42,7 @@ object SparkTileGenerator2 {
       logger.info(s">> ClusterNodes ${clusterNodes} and Nodes ${nodes} are equal")
     
     // Let's rock it
+    val time = NidanUtils.timeIt{
     val squareMatrix = CoordinateGenerator.squareMatrixfromDimension(_, _)
     val localFile = localInput + "/" + fileName
     val dim = tileDimension(new File(localFile))
@@ -59,7 +61,10 @@ object SparkTileGenerator2 {
       .filter(_ == 1)
       .count
       
-    logger.info(s"Errors generated: $coords")
+      coords
+    }
+    
+    logger.info(s"Errors generated: ${time._1} in ${time._2} secs")
   }
   def tileDimension(svsFile:File):TileDimension = {
     val os = new OpenSlide(svsFile)
