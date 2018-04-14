@@ -25,7 +25,9 @@ import nidan.tiles.TilePoint
 import nidan.utils.NidanUtils
 import org.apache.spark.sql.Row
 import nidan.spark.NidanRecord
-import org.apache.spark.sql.types._
+import org.apache.spark.sql.types.{StringType,LongType}
+import org.apache.spark.sql.types.{IntegerType,BinaryType}
+import org.apache.spark.sql.types.{StructType,StructField}
 
 
 object SparkTileGenerator2 {
@@ -137,7 +139,7 @@ object SparkTileGenerator2 {
         meta.index.c,
         meta.rowsCols._1,
         meta.rowsCols._2,
-        bytes
+        Array[Byte](1,2,3)
         )
     
     
