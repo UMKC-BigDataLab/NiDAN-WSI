@@ -92,8 +92,8 @@ object SparkTileGenerator2 {
     val (rddTiles, timeGenerateTiles) = NidanUtils.timeIt{ 
       sc.parallelize(squareMatrix(dim, n))
       .map(coord2meta(localFile, localOutput, level, n, _))
-//      .repartition(clusterNodes)
-//      .mapPartitionsWithIndex(partitionGroups)
+      .repartition(clusterNodes)
+      .mapPartitionsWithIndex(partitionGroups)
     }
     
     val count = rddTiles.count
