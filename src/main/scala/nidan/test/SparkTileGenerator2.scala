@@ -112,7 +112,7 @@ object SparkTileGenerator2 {
     
     // 3. Write to the database
     val (dfWrite, timeWrite) = NidanUtils.timeIt{
-      dfTiles.write.mode("append").partitionBy("fileId", "level").orc(hdfsDB)
+      dfTiles.write.mode("append").orc(hdfsDB)
     }
     
     
