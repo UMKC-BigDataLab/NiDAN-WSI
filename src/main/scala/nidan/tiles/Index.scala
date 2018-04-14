@@ -12,7 +12,12 @@ package nidan.tiles
  * @param seq Tile's sequential index 
  * @param c Tile's content index
  */
-class Index(row:Int, col:Int, seq:Int, z:Int, c:Int) extends Serializable{
+class Index(
+    val row:Int, 
+    val col:Int, 
+    val seq:Int, 
+    val z:Int, 
+    val c:Int) extends Serializable{
   
   /**
    * Makes an array out of the tumple, then concats everything in a string

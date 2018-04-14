@@ -1,22 +1,31 @@
 package nidan.test
 
-import nidan.io.NidanContext
-import org.openslide.OpenSlide
-import java.io.File
-import nidan.regions.CoordinateGenerator
-import nidan.tiles.{TileDimension,TilePoint}
-import nidan.tiles.TileMetadata
 import java.awt.image.BufferedImage
 import java.awt.image.DataBufferInt
-import org.apache.commons.imaging.Imaging
-import org.apache.commons.imaging.ImageFormats
-import javax.imageio.ImageIO
 import java.awt.image.WritableRaster
-import javax.imageio.plugins.jpeg.JPEGImageWriteParam
-import javax.imageio.ImageWriteParam
+import java.io.File
+import java.nio.file.Files
+import java.nio.file.Paths
+
+import org.apache.commons.imaging.ImageFormats
+import org.openslide.OpenSlide
+
 import javax.imageio.IIOImage
+import javax.imageio.ImageIO
+import javax.imageio.ImageWriteParam
+import javax.imageio.plugins.jpeg.JPEGImageWriteParam
 import javax.imageio.stream.FileImageOutputStream
+import nidan.io.NidanContext
+import nidan.regions.CoordinateGenerator
+import nidan.spark.NidanRecord
+import nidan.tiles.Index
+import nidan.tiles.TileDimension
+import nidan.tiles.TileMetadata
+import nidan.tiles.TilePoint
 import nidan.utils.NidanUtils
+import org.apache.spark.sql.Row
+import nidan.spark.NidanRecord
+import nidan.spark.NidanRecord
 
 
 object SparkTileGenerator2 {
@@ -26,46 +35,89 @@ object SparkTileGenerator2 {
     val fileName = args(0)
     val localInput = args(1)
     val localOutput = args(2)
+    val hdfsDB = args(3)
     
-    val n = args(3).toInt //Number of partitionss
-    val level = args(4).toInt
-    val clusterNodes = args(5).toInt
+    val n = args(4).toInt //Number of partitionss
+    val level = args(5).toInt
+    val clusterNodes = args(6).toInt
     
     val logger = NidanContext.log
     val sc = NidanContext.sparkContext
     val sql = NidanContext.sqlContext
+    import sql.implicits._
     
     // Getting the nodes in a fancy way ;)
     val host = sc.getConf.get("spark.driver.host")
     val nodes = sc.getExecutorMemoryStatus.map(_._1).filter(!_.contains(host)).size
-    if(nodes == clusterNodes) 
-      logger.info(s">> ClusterNodes ${clusterNodes} and Nodes ${nodes} are equal")
+    
+    logger.info(s">> ClusterNodes ${clusterNodes} and Nodes ${nodes} are equal")
     
     // Let's rock it
-    val time = NidanUtils.timeIt{
     val squareMatrix = CoordinateGenerator.squareMatrixfromDimension(_, _)
     val localFile = localInput + "/" + fileName
     val dim = tileDimension(new File(localFile))
     
     /*** Operations
      * 1. Get the tile coordinate
-     * 2. Repartition the RDD with as many nodes in the cluster
-     * 3. Extract the tiles in groups to create less OpenSlide instances
-     * 4. Get the errors that occour
-     * 5. Count the errors
+     * 2. Generate a TileMetadata instance from the coordinates
+     * 3. Repartition the RDD with as many nodes in the cluster
+     * 4. Extract the tiles in groups to create less OpenSlide instances
      */
-    val coords = sc.parallelize(squareMatrix(dim, n))
+    val (rddTiles, timeGenerateTiles) = NidanUtils.timeIt{ 
+      sc.parallelize(squareMatrix(dim, n))
       .map(coord2meta(localFile, localOutput, level, n, _))
       .repartition(clusterNodes)
       .mapPartitionsWithIndex(partitionGroups)
-      .filter(_ == 1)
-      .count
-      
-      coords
     }
     
-    logger.info(s"Errors generated: ${time._1} in ${time._2} secs")
+    // Action plan:
+    
+    // 1. Count successes
+    val (errors, timeCount) = NidanUtils.timeIt{ 
+      rddTiles.filter(_._1 == 1).count
+    }
+    
+    // 2. Change to Dataframe 
+    val (dfTiles, timeDF) = NidanUtils.timeIt{
+      sql.createDataFrame(
+        rddTiles.map(item => toORCRecord(item._2, item._3)), 
+        classOf[NidanRecord]
+      )
+    }
+    
+    // 3. Write to the database
+    val (dfWrite, timeWrite) = NidanUtils.timeIt{
+      dfTiles.write.mode("append").partitionBy("fileId").orc(hdfsDB)
+    }
+    
+    
+    logger.info(s">> Time to write local tiles    : ${timeCount} secs, errors ${errors}")
+    logger.info(s">> Time to switch to Dataframe  : ${timeDF} secs")
+    logger.info(s">> Time to write to HDFS ORC DB : ${timeWrite} secs")
+    
   }
+  
+  def toORCRecord(bytes:Array[Byte], meta:TileMetadata) = {
+    val record = new NidanRecord(
+        meta.file,
+        meta.level,
+        meta.position.x,
+        meta.position.y,
+        meta.dimension.width,
+        meta.dimension.height,
+        meta.index.row,
+        meta.index.col,
+        meta.index.seq,
+        meta.index.z,
+        meta.index.c,
+        meta.rowsCols._1,
+        meta.rowsCols._2,
+        bytes
+        )
+    
+    record
+  }
+  
   def tileDimension(svsFile:File):TileDimension = {
     val os = new OpenSlide(svsFile)
     val dim = new TileDimension(os.getLevel0Width, os.getLevel0Height)
@@ -75,7 +127,7 @@ object SparkTileGenerator2 {
   }
   
   def coord2meta(file:String, outdir:String, level:Int, n:Int, coord:(Int,Int,Int, TilePoint,TileDimension)) = {
-    val index = new nidan.tiles.Index(coord._2, coord._3, coord._1, coord._1, coord._1)
+    val index = new Index(coord._2, coord._3, coord._1, coord._1, coord._1)
     val meta = new TileMetadata(file, file, level,coord._4, coord._5, index,(n,n))
     
     (file, outdir, meta)
@@ -112,7 +164,11 @@ object SparkTileGenerator2 {
     
     // Check if file was written, 0 => no error, 1 => means error
     val img = new File(outputFile)
-    if (img.exists) 0 else 1
+    val error = if (img.exists) 0 else 1
+    
+    val bytes = Files.readAllBytes(Paths.get(outputFile))
+    
+    (error, bytes, meta)
   }
   
   def writeJPEG(raster:WritableRaster, output:String, format:ImageFormats){
