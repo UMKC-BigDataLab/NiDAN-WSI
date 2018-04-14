@@ -57,9 +57,76 @@ object SparkTileGenerator2 {
       "totalCols","bytes"
     )
   }
-  
-  
   def main(args: Array[String]): Unit = {
+    val fileName = args(0)
+    val localInput = args(1)
+    val localOutput = args(2)
+    val hdfsDB = args(3)
+    
+    val n = args(4).toInt //Number of partitionss
+    val level = args(5).toInt
+    val clusterNodes = args(6).toInt
+    
+    val logger = NidanContext.log
+    val sc = NidanContext.sparkContext
+    val sql = NidanContext.sqlContext
+    import sql.implicits._
+    
+    // Getting the nodes in a fancy way ;)
+    val host = sc.getConf.get("spark.driver.host")
+    val nodes = sc.getExecutorMemoryStatus.map(_._1).filter(!_.contains(host)).size
+    
+    logger.info(s">> ClusterNodes ${clusterNodes} and Nodes ${nodes} are equal")
+    
+    // Let's rock it
+    val squareMatrix = CoordinateGenerator.squareMatrixfromDimension(_, _)
+    val localFile = localInput + "/" + fileName
+    val dim = tileDimension(new File(localFile))
+    
+    /*** Operations
+     * 1. Get the tile coordinate
+     * 2. Generate a TileMetadata instance from the coordinates
+     * 3. Repartition the RDD with as many nodes in the cluster
+     * 4. Extract the tiles in groups to create less OpenSlide instances
+     */
+    val (rddTiles, timeGenerateTiles) = NidanUtils.timeIt{ 
+      sc.parallelize(squareMatrix(dim, n))
+      .map(coord2meta(localFile, localOutput, level, n, _))
+//      .repartition(clusterNodes)
+//      .mapPartitionsWithIndex(partitionGroups)
+    }
+    
+    val count = rddTiles.count
+    logger.info(s">> Total tiles before grouping: ${count}")
+    
+//    // Action plan:
+//    
+//    // 1. Count successes
+//    val (errors, timeCount) = NidanUtils.timeIt{ 
+//      rddTiles.filter(_._1 == 1).count
+//    }
+//    
+//    // 2. Change to Dataframe 
+//    val dfTiles = sql.createDataFrame(
+//      rddTiles.map(item => toORCRecord(item._2, item._3, fileName)), 
+//      getSchema
+//    )
+//    
+//    
+//    // 3. Write to the database
+//    val (dfWrite, timeWrite) = NidanUtils.timeIt{
+//      dfTiles.write.mode("append").orc(hdfsDB)
+//    }
+//    
+//    
+//    logger.info(s">> Time to write local tiles    : ${timeCount} secs, errors ${errors}")
+////    logger.info(s">> Time to switch to Dataframe  : ${timeDF} secs")
+//    logger.info(s">> Time to write to HDFS ORC DB : ${timeWrite} secs")
+    
+  }
+  
+  
+  def makeTiles(args: Array[String]): Unit = {
     val fileName = args(0)
     val localInput = args(1)
     val localOutput = args(2)
