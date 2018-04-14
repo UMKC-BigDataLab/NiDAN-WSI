@@ -26,10 +26,28 @@ import nidan.utils.NidanUtils
 import org.apache.spark.sql.Row
 import nidan.spark.NidanRecord
 import nidan.spark.NidanRecord
+import org.apache.spark.sql.types._
 
 
 object SparkTileGenerator2 {
 
+  def getSchema = {
+    new StructType()
+    .add(StructField("fileId", StringType, true))
+    .add(StructField("level", IntegerType, true))
+    .add(StructField("x", LongType, true))
+    .add(StructField("y", LongType, true))
+    .add(StructField("tileWidth", LongType, true))
+    .add(StructField("tileHeight", LongType, true))
+    .add(StructField("row", IntegerType, true))
+    .add(StructField("col", IntegerType, true))
+    .add(StructField("seqIndex", IntegerType, true))
+    .add(StructField("zIndex", IntegerType, true))
+    .add(StructField("cIndex", IntegerType, true))
+    .add(StructField("totalRows", IntegerType, true))
+    .add(StructField("totalCols", IntegerType, true))
+    .add(StructField("bytes", BinaryType, true))
+  }
   
   def main(args: Array[String]): Unit = {
     val fileName = args(0)
@@ -80,8 +98,8 @@ object SparkTileGenerator2 {
     // 2. Change to Dataframe 
     val (dfTiles, timeDF) = NidanUtils.timeIt{
       sql.createDataFrame(
-        rddTiles.map(item => toORCRecord(item._2, item._3)), 
-        classOf[NidanRecord]
+        rddTiles.map(item => Row(toORCRecord(item._2, item._3))), 
+        getSchema
       )
     }
     
