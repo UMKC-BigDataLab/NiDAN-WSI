@@ -8,4 +8,4 @@ package nidan.tiles
  * @param img will be stored as a byte array
  * @param metadata It includes the image format as well as other information
  */
-class Tile(var img:Array[Byte], var metadata:TileMetadata)
+class Tile(var img:Array[Byte], var metadata:TileMetadata) extends Serializable
