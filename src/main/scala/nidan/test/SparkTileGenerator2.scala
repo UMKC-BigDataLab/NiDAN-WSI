@@ -105,14 +105,14 @@ object SparkTileGenerator2 {
     
     // 2. Change to Dataframe 
     val dfTiles = sql.createDataFrame(
-      rddTiles.map(item => Row(toORCRecord(item._2, item._3))), 
+      rddTiles.map(item => Row(toORCRecord(item._2, item._3, fileName))), 
       getSchema
     )
     
     
     // 3. Write to the database
     val (dfWrite, timeWrite) = NidanUtils.timeIt{
-      dfTiles.write.mode("append").partitionBy("fileId").orc(hdfsDB)
+      dfTiles.write.mode("append").partitionBy("fileId", "level").orc(hdfsDB)
     }
     
     
@@ -122,9 +122,9 @@ object SparkTileGenerator2 {
     
   }
   
-  def toORCRecord(bytes:Array[Byte], meta:TileMetadata) = {
+  def toORCRecord(bytes:Array[Byte], meta:TileMetadata, file:String) = {
     val record = new NidanRecord(
-        meta.file,
+        file,
         meta.level,
         meta.position.x,
         meta.position.y,
