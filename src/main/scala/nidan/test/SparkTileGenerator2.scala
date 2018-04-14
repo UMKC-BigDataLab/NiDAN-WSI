@@ -81,7 +81,6 @@ object SparkTileGenerator2 {
     val localOutput = it.toSeq.head._2
     val os = new OpenSlide(new File(file))
     val errors = it.map(el => writeTileLocal(os, el._3, localOutput))
-    os.close
     
     errors
   }
