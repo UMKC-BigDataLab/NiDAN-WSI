@@ -25,7 +25,6 @@ import nidan.tiles.TilePoint
 import nidan.utils.NidanUtils
 import org.apache.spark.sql.Row
 import nidan.spark.NidanRecord
-import nidan.spark.NidanRecord
 import org.apache.spark.sql.types._
 
 
@@ -48,6 +47,15 @@ object SparkTileGenerator2 {
     .add(StructField("totalCols", IntegerType, true))
     .add(StructField("bytes", BinaryType, true))
   }
+  
+  def getSchema2 = {
+    Seq[String](
+      "fileId","level","x","y","tileWidth","tileHeight",
+      "row","col","seqIndex","zIndex","cIndex","totalRows",
+      "totalCols","bytes"
+    )
+  }
+  
   
   def main(args: Array[String]): Unit = {
     val fileName = args(0)
@@ -96,12 +104,11 @@ object SparkTileGenerator2 {
     }
     
     // 2. Change to Dataframe 
-    val (dfTiles, timeDF) = NidanUtils.timeIt{
-      sql.createDataFrame(
-        rddTiles.map(item => Row(toORCRecord(item._2, item._3))), 
-        getSchema
-      )
-    }
+    val dfTiles = sql.createDataFrame(
+      rddTiles.map(item => Row(toORCRecord(item._2, item._3))), 
+      getSchema
+    )
+    
     
     // 3. Write to the database
     val (dfWrite, timeWrite) = NidanUtils.timeIt{
@@ -110,7 +117,7 @@ object SparkTileGenerator2 {
     
     
     logger.info(s">> Time to write local tiles    : ${timeCount} secs, errors ${errors}")
-    logger.info(s">> Time to switch to Dataframe  : ${timeDF} secs")
+//    logger.info(s">> Time to switch to Dataframe  : ${timeDF} secs")
     logger.info(s">> Time to write to HDFS ORC DB : ${timeWrite} secs")
     
   }
