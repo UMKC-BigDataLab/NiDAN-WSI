@@ -31,21 +31,21 @@ import org.apache.spark.sql.types._
 object SparkTileGenerator2 {
 
   def getSchema = {
-    new StructType()
-    .add(StructField("fileId", StringType, true))
-    .add(StructField("level", IntegerType, true))
-    .add(StructField("x", LongType, true))
-    .add(StructField("y", LongType, true))
-    .add(StructField("tileWidth", LongType, true))
-    .add(StructField("tileHeight", LongType, true))
-    .add(StructField("row", IntegerType, true))
-    .add(StructField("col", IntegerType, true))
-    .add(StructField("seqIndex", IntegerType, true))
-    .add(StructField("zIndex", IntegerType, true))
-    .add(StructField("cIndex", IntegerType, true))
-    .add(StructField("totalRows", IntegerType, true))
-    .add(StructField("totalCols", IntegerType, true))
-    .add(StructField("bytes", BinaryType, true))
+    new StructType(Array(
+    StructField("fileId", StringType, true)
+    ,StructField("level", IntegerType, true)
+    ,StructField("x", LongType, true)
+    ,StructField("y", LongType, true)
+    ,StructField("tileWidth", LongType, true)
+    ,StructField("tileHeight", LongType, true)
+    ,StructField("row", IntegerType, true)
+    ,StructField("col", IntegerType, true)
+    ,StructField("seqIndex", IntegerType, true)
+    ,StructField("zIndex", IntegerType, true)
+    ,StructField("cIndex", IntegerType, true)
+    ,StructField("totalRows", IntegerType, true)
+    ,StructField("totalCols", IntegerType, true)
+    ,StructField("bytes", BinaryType, true)))
   }
   
   def getSchema2 = {
@@ -123,7 +123,7 @@ object SparkTileGenerator2 {
   }
   
   def toORCRecord(bytes:Array[Byte], meta:TileMetadata, file:String) = {
-    val record = new NidanRecord(
+    (
         file,
         meta.level,
         meta.position.x,
@@ -140,7 +140,7 @@ object SparkTileGenerator2 {
         bytes
         )
     
-    record
+    
   }
   
   def tileDimension(svsFile:File):TileDimension = {
