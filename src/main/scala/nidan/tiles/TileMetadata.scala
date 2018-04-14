@@ -33,7 +33,7 @@ class TileMetadata (
     val dimension:TileDimension,
     val index:Index,
     val rowsCols:(Int, Int)
-){  
+)extends Serializable{  
 
   /**
    * Add all the tile information in a single string
