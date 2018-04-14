@@ -19,13 +19,12 @@ import javax.imageio.stream.FileImageOutputStream
 
 
 object SparkTileGenerator2 {
-  var localOutput = ""
 
   
   def main(args: Array[String]): Unit = {
     val fileName = args(0)
     val localInput = args(1)
-    localOutput = args(2)
+    val localOutput = args(2)
     
     val n = args(3).toInt //Number of partitionss
     val level = args(4).toInt
@@ -54,7 +53,7 @@ object SparkTileGenerator2 {
      * 5. Count the errors
      */
     val coords = sc.parallelize(squareMatrix(dim, n))
-      .map(coord2meta(localFile, level, n, _))
+      .map(coord2meta(localFile, localOutput, level, n, _))
       .repartition(clusterNodes)
       .mapPartitionsWithIndex(partitionGroups)
       .filter(_ == 1)
@@ -70,17 +69,18 @@ object SparkTileGenerator2 {
     dim
   }
   
-  def coord2meta(file:String, level:Int, n:Int, coord:(Int,Int,Int, TilePoint,TileDimension)) = {
+  def coord2meta(file:String, outdir:String, level:Int, n:Int, coord:(Int,Int,Int, TilePoint,TileDimension)) = {
     val index = new nidan.tiles.Index(coord._2, coord._3, coord._1, coord._1, coord._1)
     val meta = new TileMetadata(file, file, level,coord._4, coord._5, index,(n,n))
     
-    (file, meta)
+    (file, outdir, meta)
   }
   
-  val partitionGroups = (k:Int, it:Iterator[(String, TileMetadata)]) => {
+  def partitionGroups(k:Int, it:Iterator[(String, String, TileMetadata)]) = {
     val file = it.toSeq.head._1
+    val localOutput = it.toSeq.head._2
     val os = new OpenSlide(new File(file))
-    val errors = it.map(el => writeTileLocal(os, el._2, localOutput))
+    val errors = it.map(el => writeTileLocal(os, el._3, localOutput))
     os.close
     
     errors
