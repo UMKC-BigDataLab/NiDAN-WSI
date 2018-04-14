@@ -139,7 +139,7 @@ object SparkTileGenerator2 {
         meta.index.c,
         meta.rowsCols._1,
         meta.rowsCols._2,
-        Array[Byte](1,2,3) //bytes
+        bytes
         )
     
     
