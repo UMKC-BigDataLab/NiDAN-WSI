@@ -107,7 +107,7 @@ object SparkTileGenerator2 {
     
     // 2. Change to Dataframe 
     val dfTiles = sql.createDataFrame(
-      rddTiles.map(item => Row(toORCRecord(item._2, item._3, fileName))), 
+      rddTiles.map(item => toORCRecord(item._2, item._3, fileName)), 
       getSchema
     )
     
@@ -125,7 +125,7 @@ object SparkTileGenerator2 {
   }
   
   def toORCRecord(bytes:Array[Byte], meta:TileMetadata, file:String) = {
-    (
+    Row(
         file,
         meta.level,
         meta.position.x,
@@ -139,7 +139,7 @@ object SparkTileGenerator2 {
         meta.index.c,
         meta.rowsCols._1,
         meta.rowsCols._2,
-        Array[Byte](1,2,3)
+        Array[Byte](1,2,3) //bytes
         )
     
     
