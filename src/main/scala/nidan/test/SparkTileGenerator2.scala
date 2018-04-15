@@ -184,8 +184,9 @@ object SparkTileGenerator2 {
 //    
     
 //    val originalTotal = rddTiles1.count
-    val errors = rddWriteTiles.map(el => el._1).sum
     val writes = rddWriteTiles.map(el => el._2).sum
+    val errors = rddWriteTiles.map(el => el._1).sum
+    
 //    val reads
 //    val total = data.count
 //    val error = data.filter(_._1 == 1).count
