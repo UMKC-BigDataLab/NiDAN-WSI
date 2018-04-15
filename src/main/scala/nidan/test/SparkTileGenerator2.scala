@@ -166,6 +166,8 @@ object SparkTileGenerator2 {
       .persist(StorageLevels.MEMORY_AND_DISK)
     }
     
+    val totalEls = rddTiles1.mapPartitions(iterator => {List(iterator.size).toIterator}).sum
+    
     // Write the data in local
     val (rddWriteTiles, timeW) = NidanUtils.timeIt{ 
       rddTiles1.mapPartitions(partitionGroups1)
@@ -187,7 +189,7 @@ object SparkTileGenerator2 {
 //    val total = data.count
 //    val error = data.filter(_._1 == 1).count
 //    val success = data.filter(_._1 == 0).count
-//    logger.info(s">> Original Total: ${originalTotal}")
+    logger.info(s">> Original Total: ${totalEls}")
     logger.info(s">> Total writes: ${writes}")
 //    logger.info(s">> Errors: ${error}")
 //    logger.info(s">> Success: ${success}")
