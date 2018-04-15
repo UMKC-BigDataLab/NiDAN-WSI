@@ -163,6 +163,7 @@ object SparkTileGenerator2 {
       sc.parallelize(squareMatrix(dim, n))
       .repartition(clusterNodes)
       .map(coord2meta(localFile, localOutput, level, n, _))
+      .distinct
       .persist(StorageLevels.MEMORY_AND_DISK)
     }
     
