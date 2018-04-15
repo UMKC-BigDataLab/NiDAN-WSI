@@ -172,6 +172,8 @@ object SparkTileGenerator2 {
 //      rddTiles1.foreachPartition(partitionGroups1)
     }
     
+    
+    
 //    // Get the binary data from local
 //    val (rddReadTile, timeR) = NidanUtils.timeIt{
 //      rddTiles1.mapPartitions(iteratorGetBytes)
@@ -180,13 +182,13 @@ object SparkTileGenerator2 {
 //    
     
 //    val originalTotal = rddTiles1.count
-//    val writes = rddWriteTiles.co
+    val writes = rddWriteTiles.count
 //    val reads
 //    val total = data.count
 //    val error = data.filter(_._1 == 1).count
 //    val success = data.filter(_._1 == 0).count
 //    logger.info(s">> Original Total: ${originalTotal}")
-//    logger.info(s">> Total: ${total}")
+    logger.info(s">> Total writes: ${writes}")
 //    logger.info(s">> Errors: ${error}")
 //    logger.info(s">> Success: ${success}")
 //    
