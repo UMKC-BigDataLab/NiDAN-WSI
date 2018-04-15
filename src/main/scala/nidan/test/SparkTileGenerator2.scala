@@ -159,12 +159,13 @@ object SparkTileGenerator2 {
      * 3. Repartition the RDD with as many nodes in the cluster
      * 4. Extract the tiles in groups to create less OpenSlide instances
      */
-    val (rddTiles, timeGenerateTiles) = NidanUtils.timeIt{ 
+    val (rddTiles1, timeGenerateTiles) = NidanUtils.timeIt{ 
       sc.parallelize(squareMatrix(dim, n))
       .map(coord2meta(localFile, localOutput, level, n, _))
-      .repartition(clusterNodes)
-      .mapPartitionsWithIndex(partitionGroups)
     }
+    
+    val rddTiles = rddTiles1.repartition(clusterNodes)
+      .mapPartitionsWithIndex(partitionGroups)
     
     // Action plan:
     // 1. Get data successes
@@ -172,9 +173,11 @@ object SparkTileGenerator2 {
       rddTiles.persist(StorageLevels.MEMORY_AND_DISK)
     }
     
+    val originalTotal = rddTiles1.count
     val total = data.count
     val error = data.filter(_._1 == 1).count
     val success = data.filter(_._1 == 0).count
+    logger.info(s">> Original Total: ${originalTotal}")
     logger.info(s">> Total: ${total}")
     logger.info(s">> Errors: ${error}")
     logger.info(s">> Success: ${success}")
