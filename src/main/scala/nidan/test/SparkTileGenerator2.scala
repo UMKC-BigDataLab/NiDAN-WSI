@@ -28,6 +28,7 @@ import nidan.spark.NidanRecord
 import org.apache.spark.sql.types.{StringType,LongType}
 import org.apache.spark.sql.types.{IntegerType,BinaryType}
 import org.apache.spark.sql.types.{StructType,StructField}
+import org.apache.spark.api.java.StorageLevels
 
 
 object SparkTileGenerator2 {
@@ -166,28 +167,34 @@ object SparkTileGenerator2 {
     }
     
     // Action plan:
-    
-    // 1. Count successes
-    val (errors, timeCount) = NidanUtils.timeIt{ 
-      rddTiles.filter(_._1 == 1).count
+    // 1. Get data successes
+    val (data, timeCount) = NidanUtils.timeIt{ 
+      rddTiles.persist(StorageLevels.MEMORY_AND_DISK)
     }
     
-    // 2. Change to Dataframe 
-    val dfTiles = sql.createDataFrame(
-      rddTiles.map(item => toORCRecord(item._2, item._3, fileName)), 
-      getSchema
-    )
-    
-    
-    // 3. Write to the database
-    val (dfWrite, timeWrite) = NidanUtils.timeIt{
-      dfTiles.write.mode("append").orc(hdfsDB)
-    }
-    
-    
-    logger.info(s">> Time to write local tiles    : ${timeCount} secs, errors ${errors}")
-//    logger.info(s">> Time to switch to Dataframe  : ${timeDF} secs")
-    logger.info(s">> Time to write to HDFS ORC DB : ${timeWrite} secs")
+    val total = data.count
+    val error = data.filter(_._1 == 1).count
+    val success = data.filter(_._1 == 0).count
+    logger.info(s">> Total: ${total}")
+    logger.info(s">> Errors: ${error}")
+    logger.info(s">> Success: ${success}")
+//    
+//    // 2. Change to Dataframe 
+//    val dfTiles = sql.createDataFrame(
+//      rddTiles.map(item => toORCRecord(item._2, item._3, fileName)), 
+//      getSchema
+//    )
+//    
+//    
+//    // 3. Write to the database
+//    val (dfWrite, timeWrite) = NidanUtils.timeIt{
+//      dfTiles.write.mode("append").partitionBy("fileId", "level").orc(hdfsDB)
+//    }
+//    
+//    
+//    logger.info(s">> Time to write local tiles    : ${timeCount} secs, errors ${errors}")
+////    logger.info(s">> Time to switch to Dataframe  : ${timeDF} secs")
+//    logger.info(s">> Time to write to HDFS ORC DB : ${timeWrite} secs")
     
   }
   
