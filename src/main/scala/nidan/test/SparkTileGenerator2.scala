@@ -171,7 +171,7 @@ object SparkTileGenerator2 {
     
     // Write the data in local
     val (rddWriteTiles, timeW) = NidanUtils.timeIt{ 
-//      rddTiles1.mapPartitions(partitionGroups1, true)
+      rddTiles1.mapPartitions(partitionGroups1, true)
 //      rddTiles1.foreachPartition(partitionGroups1)
     }
     
@@ -185,16 +185,16 @@ object SparkTileGenerator2 {
 //    
     
 //    val originalTotal = rddTiles1.count
-//    val writes = rddWriteTiles.map(el => el._2).sum
-//    val errors = rddWriteTiles.map(el => el._1).sum
+    val writes = rddWriteTiles.map(el => el._2).sum
+    val errors = rddWriteTiles.map(el => el._1).sum
     
 //    val reads
 //    val total = data.count
 //    val error = data.filter(_._1 == 1).count
 //    val success = data.filter(_._1 == 0).count
     logger.info(s">> Original Total: ${totalEls}")
-//    logger.info(s">> Total writes: ${writes}")
-//    logger.info(s">> Errors: ${errors}")
+    logger.info(s">> Total writes: ${writes}")
+    logger.info(s">> Errors: ${errors}")
 //    logger.info(s">> Success: ${success}")
 //    
 //    // 2. Change to Dataframe 
@@ -267,7 +267,9 @@ object SparkTileGenerator2 {
     krdd
   }
   
-  def partitionGroups1(it:Iterator[(String, String, TileMetadata)]) = {
+  def partitionGroups1(it:Iterator[(String, String, TileMetadata)]):Iterator[(Int,Int)] = {
+    if(it.size == 0) return Seq((1, 0)).toIterator
+    
     val file = it.toSeq.head._1
     val localOutput = it.toSeq.head._2
     val os = new OpenSlide(new File(file))
