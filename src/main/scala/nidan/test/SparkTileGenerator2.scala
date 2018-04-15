@@ -268,7 +268,7 @@ object SparkTileGenerator2 {
   }
   
   def partitionGroups1(it:Iterator[(String, String, TileMetadata)]):Iterator[(Int,Int)] = {
-    if(it.size == 0) return Seq((1, 0)).toIterator
+    if(it.isEmpty) return Seq((1, 0)).toIterator
     
     val file = it.toSeq.take(1)(0)._1
     val localOutput = it.toSeq.take(1)(0)._2
