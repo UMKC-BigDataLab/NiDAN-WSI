@@ -168,7 +168,8 @@ object SparkTileGenerator2 {
     
     // Write the data in local
     val (rddWriteTiles, timeW) = NidanUtils.timeIt{ 
-      rddTiles1.foreachPartition(partitionGroups1)
+      rddTiles1.mapPartitions(partitionGroups1)
+//      rddTiles1.foreachPartition(partitionGroups1)
     }
     
 //    // Get the binary data from local
@@ -263,7 +264,11 @@ object SparkTileGenerator2 {
     val file = it.toSeq.head._1
     val localOutput = it.toSeq.head._2
     val os = new OpenSlide(new File(file))
-    val errors = it.map(el => writeTileLocal(os, el._3, localOutput)).toList
+    
+    val data = it.toList
+    val errors = data.map(el => writeTileLocal(os, el._3, localOutput))
+    
+    errors.toIterator
   }
   
   // Take a tile object and write it down in the local storage
@@ -290,6 +295,7 @@ object SparkTileGenerator2 {
     val img = new File(outputFile)
     val error = if (img.exists) 0 else 1
     
+    (error)
 //    val bytes = Files.readAllBytes(Paths.get(outputFile))
 //    (error, bytes, meta)
   }
