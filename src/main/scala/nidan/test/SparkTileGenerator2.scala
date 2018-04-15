@@ -184,14 +184,15 @@ object SparkTileGenerator2 {
 //    
     
 //    val originalTotal = rddTiles1.count
-    val writes = rddWriteTiles.sum
+    val errors = rddWriteTiles.map(el => el._1).sum
+    val writes = rddWriteTiles.map(el => el._2).sum
 //    val reads
 //    val total = data.count
 //    val error = data.filter(_._1 == 1).count
 //    val success = data.filter(_._1 == 0).count
     logger.info(s">> Original Total: ${totalEls}")
     logger.info(s">> Total writes: ${writes}")
-//    logger.info(s">> Errors: ${error}")
+    logger.info(s">> Errors: ${errors}")
 //    logger.info(s">> Success: ${success}")
 //    
 //    // 2. Change to Dataframe 
@@ -270,7 +271,7 @@ object SparkTileGenerator2 {
     val os = new OpenSlide(new File(file))
     
     val data = it.toList
-    val errors = data.map(el => writeTileLocal(os, el._3, localOutput))
+    val errors = data.map(el => (writeTileLocal(os, el._3, localOutput), data.size))
     
     errors.toIterator
   }
