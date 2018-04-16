@@ -182,6 +182,7 @@ object SparkTileGenerator2 {
         sql.createDataFrame(
             rddTiles1
             .mapPartitions(readLocal)
+            .filter(i => i._1 != null)
             .distinct
             .map(item => toORCRecord(item._1, item._2, fileName)), 
         getSchema
