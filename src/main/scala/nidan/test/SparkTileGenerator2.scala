@@ -146,12 +146,15 @@ object SparkTileGenerator2 {
     val host = sc.getConf.get("spark.driver.host")
     val nodes = sc.getExecutorMemoryStatus.map(_._1).filter(!_.contains(host)).size
     
-    logger.info(s">> ClusterNodes ${clusterNodes} and Nodes ${nodes} are equal")
     
     // Let's rock it
-    val squareMatrix = CoordinateGenerator.squareMatrixfromDimension(_, _)
     val localFile = localInput + "/" + fileName
     val dim = tileDimension(new File(localFile))
+    
+    val squareMatrix = CoordinateGenerator.squareMatrixfromDimension(dim, n)
+    val sqMatrix = squareMatrix.size
+    val distSqMatrix = squareMatrix.distinct.size
+    
     
     /*** Operations
      * 1. Get the tile coordinate
@@ -160,10 +163,9 @@ object SparkTileGenerator2 {
      * 4. Extract the tiles in groups to create less OpenSlide instances
      */
     val (rddTiles1, timeGenerateTiles) = NidanUtils.timeIt{ 
-      sc.parallelize(squareMatrix(dim, n))
+      sc.parallelize(squareMatrix)
       .repartition(clusterNodes)
       .map(coord2meta(localFile, localOutput, level, n, _))
-      .distinct
       .persist(StorageLevels.MEMORY_AND_DISK)
     }
     
@@ -171,8 +173,8 @@ object SparkTileGenerator2 {
     
     // Write the data in local
     val (rddWriteTiles, timeW) = NidanUtils.timeIt{ 
-//      rddTiles1.mapPartitions(partitionGroups1, true)
-      rddTiles1.foreachPartition(partitionGroups1)
+      rddTiles1.mapPartitions(partitionGroups1)
+//      rddTiles1.foreachPartition(partitionGroups1)
     }
     
     
@@ -213,6 +215,8 @@ object SparkTileGenerator2 {
 //    logger.info(s">> Time to write local tiles    : ${timeCount} secs, errors ${errors}")
 ////    logger.info(s">> Time to switch to Dataframe  : ${timeDF} secs")
 //    logger.info(s">> Time to write to HDFS ORC DB : ${timeWrite} secs")
+    logger.info(s">> sqMatrix.size ${sqMatrix} and distinct(sqMatrix).size ${distSqMatrix}")
+    logger.info(s">> ClusterNodes ${clusterNodes} and Nodes ${nodes} are equal")
     
   }
   
@@ -302,7 +306,7 @@ object SparkTileGenerator2 {
     val img = new File(outputFile)
     val error = if (img.exists) 0 else 1
     
-    (error)
+    error
 //    val bytes = Files.readAllBytes(Paths.get(outputFile))
 //    (error, bytes, meta)
   }
