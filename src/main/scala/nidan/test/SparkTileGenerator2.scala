@@ -170,11 +170,11 @@ object SparkTileGenerator2 {
     }
     
     // Write the data in local
-    val (rddWriteTiles, time2Write) = NidanUtils.timeIt{ 
+    val (rddWriteTiles, time2Write1) = NidanUtils.timeIt{ 
       rddTiles1.mapPartitions(partitionGroups1)
     }
     
-    val writes = rddWriteTiles.map(_._2).sum
+    val (writes, time2Write2) = NidanUtils.timeIt{rddWriteTiles.map(_._2).sum}
     val errors = rddWriteTiles.map(_._1).sum
       
     // 2. Change to Dataframe 
@@ -198,7 +198,7 @@ object SparkTileGenerator2 {
 ////    logger.info(s">> Time to switch to Dataframe  : ${timeDF} secs")
 //    logger.info(s">> Time to write to HDFS ORC DB : ${timeWrite} secs")
     logger.info(s">> Time to generate tiles: ${time2Tile} secs")
-    logger.info(s">> Time to write in local: ${time2Write} secs")
+    logger.info(s">> Time to write in local: ${time2Write1 + time2Write2} secs")
     logger.info(s">> Time to make DataFrame: ${time2DF} secs")
     logger.info(s">> Time to write in ORC  : ${time2ORC} secs")
     logger.info(s">> Writes ${writes}, with errors ${errors}")
