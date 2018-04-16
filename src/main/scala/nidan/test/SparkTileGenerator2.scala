@@ -151,6 +151,14 @@ object SparkTileGenerator2 {
     val dim = tileDimension(new File(localFile))
     val squareMatrix = CoordinateGenerator.squareMatrixfromDimension(_, _)
     
+    // Pipes for data
+    val download = "/dev/data/scripts/down.sh"
+    val clean = "/dev/data/scripts/clean.sh"
+    val files = sc.parallelize((s"${fileName}#" * (clusterNodes * 2)).split("#").toSeq, clusterNodes)
+    
+    // Copy the data to the local node
+    val (copyArr, time2LocalCopy) = NidanUtils.timeIt{files.pipe(download).collect}
+    
     val (rddTiles2, theTime) = NidanUtils.timeIt{
       val rddTiles1 =
         sql.createDataFrame(
@@ -162,8 +170,13 @@ object SparkTileGenerator2 {
           .map(record => toORCRecord(record._2, record._3, fileName)),getSchema
         ).write.mode("append").partitionBy("fileId", "level").orc(hdfsDB)   
     }
-     
-    logger.info(s">> Time to generate tiles: ${theTime} secs")
+    
+    // Clean the data from the local node
+    val (delArr, time2Clean) = NidanUtils.timeIt{files.pipe(clean).collect}
+    
+    logger.info(s">> Time to copy to local: ${time2LocalCopy} secs")
+    logger.info(s">> Time to generate tiles  : ${theTime} secs")
+    logger.info(s">> Time to clean local: ${time2Clean} secs")
     
   }
   
