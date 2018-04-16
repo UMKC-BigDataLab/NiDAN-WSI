@@ -132,6 +132,47 @@ object SparkTileGenerator2 {
     val localInput = args(1)
     val localOutput = args(2)
     val hdfsDB = args(3)
+    val n = args(4).toInt //Number of partitionss
+    val level = args(5).toInt
+    val clusterNodes = args(6).toInt
+    
+    val logger = NidanContext.log
+    val sc = NidanContext.sparkContext
+    val sql = NidanContext.sqlContext
+    import sql.implicits._
+    
+    // Getting the nodes in a fancy way ;)
+    val host = sc.getConf.get("spark.driver.host")
+    val nodes = sc.getExecutorMemoryStatus.map(_._1).filter(!_.contains(host)).size
+    
+    
+    // Let's rock it
+    val localFile = localInput + "/" + fileName
+    val dim = tileDimension(new File(localFile))
+    val squareMatrix = CoordinateGenerator.squareMatrixfromDimension(_, _)
+    
+    val (rddTiles2, theTime) = NidanUtils.timeIt{
+      val rddTiles1 =
+        sql.createDataFrame(
+          sc.parallelize(squareMatrix(dim, n))
+          .repartition(clusterNodes)
+          .map(coord2meta(localFile, localOutput, level, n, _))
+          .persist(StorageLevels.MEMORY_AND_DISK)
+          .mapPartitions(partitionGroupsWR).filter(_._1 != 1)
+          .map(record => toORCRecord(record._2, record._3, fileName)),getSchema
+        ).write.mode("append").partitionBy("fileId", "level").orc(hdfsDB)   
+    }
+     
+    logger.info(s">> Time to generate tiles: ${theTime} secs")
+    
+  }
+  
+  
+  def main1(args: Array[String]): Unit = {
+    val fileName = args(0)
+    val localInput = args(1)
+    val localOutput = args(2)
+    val hdfsDB = args(3)
     
     val n = args(4).toInt //Number of partitionss
     val level = args(5).toInt
@@ -285,6 +326,52 @@ object SparkTileGenerator2 {
     }
     
     errors.toIterator
+  }
+  
+  def partitionGroupsWR(it:Iterator[(String, String, TileMetadata)]) 
+  :Iterator[(Int,Array[Byte],TileMetadata)]= {
+    val errors = if(!it.hasNext) List((1, null, null))
+    else {
+      val element = it.next()
+      val file = element._1
+      val localOutput = element._2
+      
+      val os = new OpenSlide(new File(file))
+      val first = writeLocalGetBytes(os, element._3, localOutput)
+      
+      first :: it.map(el => (writeLocalGetBytes(os, el._3, localOutput))).toList
+    }
+    
+    errors.toIterator
+  }
+  
+  // Take a tile object and write it down in the local storage
+  def writeLocalGetBytes(oslide:OpenSlide, meta:TileMetadata, outputDir:String) = {
+    val outputFile = outputDir + new File(meta.toString).getName
+    
+    // Get the tile information
+    val w = meta.dimension.width.toInt
+    val h = meta.dimension.height.toInt
+    val point = meta.position
+    
+    // Build up canvas to write the tile
+    val canvas = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB)
+    val data = canvas.getRaster.getDataBuffer.asInstanceOf[DataBufferInt].getData
+    val graph = canvas.getGraphics
+    
+    // Extract and write the tile
+    oslide.paintRegionARGB(data, point.x, point.y, meta.level, w, h)
+    graph.drawImage(canvas, 0, 0, w, h, null)
+    writeJPEG(canvas.getRaster, outputFile, ImageFormats.JPEG)
+    graph.dispose
+    
+    // Check if file was written, 0 => no error, 1 => means error
+    val img = new File(outputFile)
+    val error = if (img.exists) 0 else 1
+    
+    
+    val bytes = Files.readAllBytes(Paths.get(outputFile))
+    (error, bytes, meta)
   }
   
   // Take a tile object and write it down in the local storage
