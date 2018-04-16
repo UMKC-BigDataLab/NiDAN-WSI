@@ -177,7 +177,8 @@ object SparkTileGenerator2 {
 //      rddTiles1.foreachPartition(partitionGroups1)
     }
     
-    
+    val writes = rddWriteTiles.map(_._2).sum
+    val errors = rddWriteTiles.map(_._1).sum
     
 //    // Get the binary data from local
 //    val (rddReadTile, timeR) = NidanUtils.timeIt{
@@ -215,6 +216,8 @@ object SparkTileGenerator2 {
 //    logger.info(s">> Time to write local tiles    : ${timeCount} secs, errors ${errors}")
 ////    logger.info(s">> Time to switch to Dataframe  : ${timeDF} secs")
 //    logger.info(s">> Time to write to HDFS ORC DB : ${timeWrite} secs")
+    
+    logger.info(s">> Writes ${writes}, with errors ${errors}")
     logger.info(s">> sqMatrix.size ${sqMatrix} and distinct(sqMatrix).size ${distSqMatrix}")
     logger.info(s">> ClusterNodes ${clusterNodes} and Nodes ${nodes} are equal")
     
