@@ -275,12 +275,17 @@ object SparkTileGenerator2 {
   }
   
   def partitionGroups1(it:Iterator[(String, String, TileMetadata)]):Iterator[(Int,Int)] = {
-    val file = it.toSeq.head._1
-    val localOutput = it.toSeq.head._2
-    val os = new OpenSlide(new File(file))
-    
-    val data = it.toList
-    val errors = data.map(el => (writeTileLocal(os, el._3, localOutput), data.size))
+    val errors = if(!it.hasNext) List((1, 0))
+    else {
+      val element = it.next()
+      val file = element._1
+      val localOutput = element._2
+      val os = new OpenSlide(new File(file))
+      writeTileLocal(os, element._3, localOutput)
+      
+      val data = it.toList
+      data.map(el => (writeTileLocal(os, el._3, localOutput), data.size))
+    }
     
     errors.toIterator
   }
