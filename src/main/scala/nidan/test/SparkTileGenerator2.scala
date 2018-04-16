@@ -162,61 +162,44 @@ object SparkTileGenerator2 {
      * 3. Repartition the RDD with as many nodes in the cluster
      * 4. Extract the tiles in groups to create less OpenSlide instances
      */
-    val (rddTiles1, timeGenerateTiles) = NidanUtils.timeIt{ 
+    val (rddTiles1, time2Tile) = NidanUtils.timeIt{ 
       sc.parallelize(squareMatrix)
       .repartition(clusterNodes)
       .map(coord2meta(localFile, localOutput, level, n, _))
       .persist(StorageLevels.MEMORY_AND_DISK)
     }
     
-    val totalEls = rddTiles1.mapPartitions(iterator => {List(iterator.size).toIterator}).sum
-    
     // Write the data in local
-    val (rddWriteTiles, timeW) = NidanUtils.timeIt{ 
+    val (rddWriteTiles, time2Write) = NidanUtils.timeIt{ 
       rddTiles1.mapPartitions(partitionGroups1)
-//      rddTiles1.foreachPartition(partitionGroups1)
     }
     
     val writes = rddWriteTiles.map(_._2).sum
     val errors = rddWriteTiles.map(_._1).sum
+      
+    // 2. Change to Dataframe 
+    val (dfTiles, time2DF) = NidanUtils.timeIt{
+        sql.createDataFrame(
+            rddTiles1
+            .mapPartitions(readLocal)
+            .distinct
+            .map(item => toORCRecord(item._1, item._2, fileName)), 
+        getSchema
+      )
+    }
+
+    // 3. Write to the database
+    val (dfWrite, time2ORC) = NidanUtils.timeIt{
+      dfTiles.write.mode("append").partitionBy("fileId", "level").orc(hdfsDB)
+    }
     
-//    // Get the binary data from local
-//    val (rddReadTile, timeR) = NidanUtils.timeIt{
-//      rddTiles1.mapPartitions(iteratorGetBytes)
-//    }
-//    
-//    
-    
-//    val originalTotal = rddTiles1.count
-//    val writes = rddWriteTiles.map(el => el._2).sum
-//    val errors = rddWriteTiles.map(el => el._1).sum
-    
-//    val reads
-//    val total = data.count
-//    val error = data.filter(_._1 == 1).count
-//    val success = data.filter(_._1 == 0).count
-//    logger.info(s">> Original Total: ${totalEls}")
-//    logger.info(s">> Total writes: ${writes}")
-//    logger.info(s">> Errors: ${errors}")
-//    logger.info(s">> Success: ${success}")
-//    
-//    // 2. Change to Dataframe 
-//    val dfTiles = sql.createDataFrame(
-//      rddTiles.map(item => toORCRecord(item._2, item._3, fileName)), 
-//      getSchema
-//    )
-//    
-//    
-//    // 3. Write to the database
-//    val (dfWrite, timeWrite) = NidanUtils.timeIt{
-//      dfTiles.write.mode("append").partitionBy("fileId", "level").orc(hdfsDB)
-//    }
-//    
-//    
 //    logger.info(s">> Time to write local tiles    : ${timeCount} secs, errors ${errors}")
 ////    logger.info(s">> Time to switch to Dataframe  : ${timeDF} secs")
 //    logger.info(s">> Time to write to HDFS ORC DB : ${timeWrite} secs")
-    
+    logger.info(s">> Time to generate tiles: ${time2Tile} secs")
+    logger.info(s">> Time to write in local: ${time2Write} secs")
+    logger.info(s">> Time to make DataFrame: ${time2DF} secs")
+    logger.info(s">> Time to write in ORC  : ${time2ORC} secs")
     logger.info(s">> Writes ${writes}, with errors ${errors}")
     logger.info(s">> sqMatrix.size ${sqMatrix} and distinct(sqMatrix).size ${distSqMatrix}")
     logger.info(s">> ClusterNodes ${clusterNodes} and Nodes ${nodes} are equal")
@@ -272,6 +255,19 @@ object SparkTileGenerator2 {
   def partitionGroups(k:Int, it:Iterator[(String, String, TileMetadata)]) = {
     val krdd = it.map(el => (k, el)).toIterator
     krdd
+  }
+  
+  
+  def readLocal(it:Iterator[(String, String, TileMetadata)]):Iterator[(Array[Byte],TileMetadata)] = {
+    val errors = if(!it.hasNext) List((null, null))
+    else {
+      it.map{element =>
+        val file = element._2 + "/" + new File(element._3.toString).getName
+        (Files.readAllBytes(Paths.get(file)), element._3)
+      }
+    }
+    
+    errors.toIterator
   }
   
   def partitionGroups1(it:Iterator[(String, String, TileMetadata)]):Iterator[(Int,Int)] = {
