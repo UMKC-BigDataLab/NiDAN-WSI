@@ -177,6 +177,7 @@ object SparkTileGenerator2 {
     logger.info(s">> Time to copy to local: ${time2LocalCopy} secs")
     logger.info(s">> Time to generate tiles  : ${theTime} secs")
     logger.info(s">> Time to clean local: ${time2Clean} secs")
+    logger.info(s">> N2N processing time: ${time2Clean + theTime + time2LocalCopy} secs")
     
   }
   
