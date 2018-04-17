@@ -158,6 +158,7 @@ object SparkTileGenerator2 {
     
     // Copy the data to the local node
     val (copyArr, time2LocalCopy) = NidanUtils.timeIt{files.pipe(download).collect}
+    val copies = copyArr.size
     
     val (rddTiles2, theTime) = NidanUtils.timeIt{
       val rddTiles1 =
@@ -173,6 +174,7 @@ object SparkTileGenerator2 {
     
     // Clean the data from the local node
     val (delArr, time2Clean) = NidanUtils.timeIt{files.pipe(clean).collect}
+    val deletes = delArr.size
     
     logger.info(s">> Time to copy to local: ${time2LocalCopy} secs")
     logger.info(s">> Time to generate tiles  : ${theTime} secs")
